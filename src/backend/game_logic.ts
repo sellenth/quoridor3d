@@ -265,6 +265,6 @@ if (testing)
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 4}) == true);
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 8}) == true);
 
-    assert(game.placeWall(Orientation.Vertical, {row: 0, col: 13}) == true);
+    assert(game.placeWall(Orientation.Vertical, {row: 4, col: 13}) == true);
     game.drawBoard();
 }
