@@ -1,3 +1,17 @@
+export function subtractVec3(a, b)
+{
+    return [ a[0] - b[0], a[1] - b[1],  a[2] - b[2] ];
+}
+
+export function crossProduct(a, b)
+{
+    return [
+        a[1] * b[2] - a[2] * b[1], 
+        a[2] * b[0] - a[0] * b[2],  
+        a[0] * b[1] - a[1] * b[0]
+    ]
+}
+
 export function translate(x, y, z, m)
 {
     return multiply (m, [
@@ -42,16 +56,38 @@ export function rotationXZ(rad, m)
     ])
 }
 
+export function normalizeVec3(v)
+{
+    let mag = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+
+    if (mag > 0.00001)
+    {
+        return [v[0] / mag, v[1] / mag, v[2] / mag];
+    } else
+    {
+        return [0, 0, 0];
+    }
+}
+
+export function lookAt(camPos, upVec, lookAt)
+{
+    let zAxis = normalizeVec3(subtractVec3(camPos, lookAt));
+    let xAxis = normalizeVec3(crossProduct( zAxis, upVec ));
+    let yAxis = normalizeVec3(crossProduct( xAxis, zAxis ));
+
+    return [
+         xAxis[0],  xAxis[1],  xAxis[2], 0,
+         yAxis[0],  yAxis[1],  yAxis[2], 0,
+         zAxis[0],  zAxis[1],  zAxis[2], 0,
+        camPos[0], camPos[1], camPos[2], 1
+    ]
+
+}
+
 export function projection(fieldOfViewInRadians, aspect, near, far)
 {
-    /*
-    return multiply (m, [
-        2/width, 0,         0,  0,
-        0,       2/height, 0,   0,
-        0,       0,  2 / depth, 0,
-        0,       0,          0, 1,
-    ])
-    */
+   //https://stackoverflow.com/questions/28286057/trying-to-understand-the-math-behind-the-perspective-matrix-in-webgl/28301213#28301213
+   //The inner mechinations of math are an enigma
     var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
     var rangeInv = 1.0 / (near - far);
  
@@ -61,6 +97,137 @@ export function projection(fieldOfViewInRadians, aspect, near, far)
       0, 0, (near + far) * rangeInv, -1,
       0, 0, near * far * rangeInv * 2, 0
     ];
+}
+
+export function invertMat4(m, invOut)
+{
+    let inv = new Array(16);
+    let det = 0;
+    let i;
+
+    inv[0] = m[5]  * m[10] * m[15] - 
+             m[5]  * m[11] * m[14] - 
+             m[9]  * m[6]  * m[15] + 
+             m[9]  * m[7]  * m[14] +
+             m[13] * m[6]  * m[11] - 
+             m[13] * m[7]  * m[10];
+
+    inv[4] = -m[4]  * m[10] * m[15] + 
+              m[4]  * m[11] * m[14] + 
+              m[8]  * m[6]  * m[15] - 
+              m[8]  * m[7]  * m[14] - 
+              m[12] * m[6]  * m[11] + 
+              m[12] * m[7]  * m[10];
+
+    inv[8] = m[4]  * m[9] * m[15] - 
+             m[4]  * m[11] * m[13] - 
+             m[8]  * m[5] * m[15] + 
+             m[8]  * m[7] * m[13] + 
+             m[12] * m[5] * m[11] - 
+             m[12] * m[7] * m[9];
+
+    inv[12] = -m[4]  * m[9] * m[14] + 
+               m[4]  * m[10] * m[13] +
+               m[8]  * m[5] * m[14] - 
+               m[8]  * m[6] * m[13] - 
+               m[12] * m[5] * m[10] + 
+               m[12] * m[6] * m[9];
+
+    inv[1] = -m[1]  * m[10] * m[15] + 
+              m[1]  * m[11] * m[14] + 
+              m[9]  * m[2] * m[15] - 
+              m[9]  * m[3] * m[14] - 
+              m[13] * m[2] * m[11] + 
+              m[13] * m[3] * m[10];
+
+    inv[5] = m[0]  * m[10] * m[15] - 
+             m[0]  * m[11] * m[14] - 
+             m[8]  * m[2] * m[15] + 
+             m[8]  * m[3] * m[14] + 
+             m[12] * m[2] * m[11] - 
+             m[12] * m[3] * m[10];
+
+    inv[9] = -m[0]  * m[9] * m[15] + 
+              m[0]  * m[11] * m[13] + 
+              m[8]  * m[1] * m[15] - 
+              m[8]  * m[3] * m[13] - 
+              m[12] * m[1] * m[11] + 
+              m[12] * m[3] * m[9];
+
+    inv[13] = m[0]  * m[9] * m[14] - 
+              m[0]  * m[10] * m[13] - 
+              m[8]  * m[1] * m[14] + 
+              m[8]  * m[2] * m[13] + 
+              m[12] * m[1] * m[10] - 
+              m[12] * m[2] * m[9];
+
+    inv[2] = m[1]  * m[6] * m[15] - 
+             m[1]  * m[7] * m[14] - 
+             m[5]  * m[2] * m[15] + 
+             m[5]  * m[3] * m[14] + 
+             m[13] * m[2] * m[7] - 
+             m[13] * m[3] * m[6];
+
+    inv[6] = -m[0]  * m[6] * m[15] + 
+              m[0]  * m[7] * m[14] + 
+              m[4]  * m[2] * m[15] - 
+              m[4]  * m[3] * m[14] - 
+              m[12] * m[2] * m[7] + 
+              m[12] * m[3] * m[6];
+
+    inv[10] = m[0]  * m[5] * m[15] - 
+              m[0]  * m[7] * m[13] - 
+              m[4]  * m[1] * m[15] + 
+              m[4]  * m[3] * m[13] + 
+              m[12] * m[1] * m[7] - 
+              m[12] * m[3] * m[5];
+
+    inv[14] = -m[0]  * m[5] * m[14] + 
+               m[0]  * m[6] * m[13] + 
+               m[4]  * m[1] * m[14] - 
+               m[4]  * m[2] * m[13] - 
+               m[12] * m[1] * m[6] + 
+               m[12] * m[2] * m[5];
+
+    inv[3] = -m[1] * m[6] * m[11] + 
+              m[1] * m[7] * m[10] + 
+              m[5] * m[2] * m[11] - 
+              m[5] * m[3] * m[10] - 
+              m[9] * m[2] * m[7] + 
+              m[9] * m[3] * m[6];
+
+    inv[7] = m[0] * m[6] * m[11] - 
+             m[0] * m[7] * m[10] - 
+             m[4] * m[2] * m[11] + 
+             m[4] * m[3] * m[10] + 
+             m[8] * m[2] * m[7] - 
+             m[8] * m[3] * m[6];
+
+    inv[11] = -m[0] * m[5] * m[11] + 
+               m[0] * m[7] * m[9] + 
+               m[4] * m[1] * m[11] - 
+               m[4] * m[3] * m[9] - 
+               m[8] * m[1] * m[7] + 
+               m[8] * m[3] * m[5];
+
+    inv[15] = m[0] * m[5] * m[10] - 
+              m[0] * m[6] * m[9] - 
+              m[4] * m[1] * m[10] + 
+              m[4] * m[2] * m[9] + 
+              m[8] * m[1] * m[6] - 
+              m[8] * m[2] * m[5];
+
+    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+
+    if (det == 0)
+        return false;
+
+    det = 1.0 / det;
+
+    for (i = 0; i < 16; i++)
+        invOut[i] = inv[i] * det;
+
+    return true;
 }
 
 export function identity()
