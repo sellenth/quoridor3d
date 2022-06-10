@@ -32,6 +32,21 @@ export function scale(x, y, z, m)
     ])
 }
 
+export function cos_d(d)
+{
+    return (Math.cos(d * Math.PI / 180));
+}
+
+export function sin_d(d)
+{
+    return (Math.sin(d * Math.PI / 180));
+}
+
+export function tan_d(d)
+{
+    return (Math.tan(d * Math.PI / 180));
+}
+
 export function rotationXY(rad, m)
 {
     let c = Math.cos(rad);
@@ -67,6 +82,21 @@ export function normalizeVec3(v)
     {
         return [0, 0, 0];
     }
+}
+
+export function lookForward(camPos, upVec, front)
+{
+    let zAxis = normalizeVec3(front);
+    let xAxis = normalizeVec3(crossProduct( zAxis, upVec ));
+    let yAxis = normalizeVec3(crossProduct( xAxis, zAxis ));
+
+    return [
+         xAxis[0],  xAxis[1],  xAxis[2], 0,
+         yAxis[0],  yAxis[1],  yAxis[2], 0,
+         zAxis[0],  zAxis[1],  zAxis[2], 0,
+        camPos[0], camPos[1], camPos[2], 1
+    ]
+
 }
 
 export function lookAt(camPos, upVec, lookAt)
