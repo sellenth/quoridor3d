@@ -1,7 +1,8 @@
 import vss from "./vs.js";
 import fss from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
-import {crossProduct, identity, multiply, translate, scale, projection, rotationXY, rotationXZ, lookAt, invertMat4, normalizeVec3, cos_d, sin_d} from "./math.js"
+import {identity, translate, projection, invertMat4, rotationYZ, rotationXY, rotationXZ} from "./math.js"
+import { Camera } from "./camera.js";
 
 const szFLOAT = 4;
 
@@ -10,140 +11,6 @@ function logMatrix(m)
     for (let i = 0; i < 4; i++)
     {
         console.log(m[i * 4 + 0], m[i * 4 + 1], m[i * 4 + 2], m[i * 4 + 3]);
-    }
-}
-
-class Vec3
-{
-    x;
-    y;
-    z;
-
-    constructor(x, y, z)
-    {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    add(other)
-    {
-        this.x += other.x;
-        this.y += other.y;
-        this.z += other.z;
-        return this;
-    }
-
-    sub(other)
-    {
-        this.x -= other.x;
-        this.y -= other.y;
-        this.z -= other.z;
-        return this;
-    }
-
-    scale(factor)
-    {
-        this.x *= factor;
-        this.y *= factor;
-        this.z *= factor;
-        return this;
-    }
-}
-
-class Camera {
-    #frontVec = new Vec3(0, 0, 1);
-    #rightVec = new Vec3(1, 0, 0);
-    #upVec = new Vec3(0, 1, 0);
-    #position = new Vec3(0, 0, -15);
-    #yaw = -89;
-    #pitch = 0;
-    #moveSpeed = 10;
-    #mouseSens = 0.1;
-    keysDown = {};
-
-    constructor()
-    {
-
-    }
-
-    getRightVec()
-    {
-        return [this.#rightVec.x, this.#rightVec.y, this.#rightVec.z];
-    }
-
-    getUpVec()
-    {
-        return [this.#upVec.x, this.#upVec.y, this.#upVec.z];
-    }
-
-    getFrontVec()
-    {
-        return [this.#frontVec.x, this.#frontVec.y, this.#frontVec.z];
-    }
-
-    getPosition()
-    {
-        return [this.#position.x, this.#position.y, this.#position.z];
-    }
-
-
-
-    Move(deltaTime)
-    {
-        let velocity = this.#moveSpeed * deltaTime;
-        if (this.keysDown.w)
-        {
-            this.#position.sub(new Vec3(...this.getFrontVec()).scale(velocity));
-        }
-        if (this.keysDown.s) {
-            this.#position.add(new Vec3(...this.getFrontVec()).scale(velocity));
-        }
-        if (this.keysDown.a) {
-            this.#position.sub(new Vec3(...this.getRightVec()).scale(velocity));
-        }
-        if (this.keysDown.d) {
-            this.#position.add(new Vec3(...this.getRightVec()).scale(velocity));
-        }
-    }
-
-    updateVectors()
-    {
-        let front = new Vec3(0, 0, 0);
-        front.x = cos_d(this.#yaw) * cos_d(this.#pitch);
-        front.y = sin_d(this.#pitch);
-        front.z = sin_d(this.#yaw) * cos_d(this.#pitch);
-
-        this.#frontVec = new Vec3(...normalizeVec3([front.x, front.y, front.z]));
-        this.#rightVec = new Vec3(...normalizeVec3(crossProduct( [...this.getFrontVec()], [0, 1, 0] )));
-        this.#upVec = new Vec3(...normalizeVec3(crossProduct( [...this.getRightVec()], [...this.getFrontVec()] )));
-
-    }
-    
-    getCameraMatrix()
-    {
-        return [
-            ...this.getRightVec(), 0,
-            ...this.getUpVec(),    0,
-            ...this.getFrontVec(), 0,
-            ...this.getPosition(), 1
-        ]
-    }
-
-    Look(xOffset, yOffset)
-    {
-        xOffset *= this.#mouseSens;
-        yOffset *= this.#mouseSens;
-
-        this.#yaw -= xOffset;
-        this.#pitch += yOffset;
-
-        if (this.#pitch > 89)
-            this.#pitch = 89;
-        if (this.#pitch < -89)
-            this.#pitch = -89;
-
-        this.updateVectors();
     }
 }
 
@@ -219,9 +86,9 @@ async function main() {
     let playerVAO = gl.createVertexArray();
     gl.bindVertexArray(playerVAO);
 
-    let buff2 = gl.createBuffer();
+    buff = gl.createBuffer();
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buff2);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buff);
 
     let cubeData = [
         0, 0, 0,      255, 0, 0,
@@ -273,6 +140,37 @@ async function main() {
         0 //offset from start of buffer
     );
 
+    let fenceProgram = createProgram(gl, vs, fs);
+    let fencePosAttrib = gl.getAttribLocation(fenceProgram, "a_position");
+
+    let fenceVAO = gl.createVertexArray();
+    gl.bindVertexArray(fenceVAO);
+
+    buff = gl.createBuffer();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, buff);
+
+    let fenceData = [
+        0, 0, 0,      255, 0, 0,
+        2, 0, 0,      255, 0, 0,
+        2, 2, 0,      255, 0, 0,
+        0, 0, 0,      255, 0, 0,
+        0, 2, 0,      255, 0, 0,
+        2, 2, 0,      255, 0, 0,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fenceData), gl.STATIC_DRAW);
+
+    gl.enableVertexAttribArray(fencePosAttrib);
+
+    // binds currently bound array_buffer (positionBuffer) & ebo (elBuff) to this attribPointer
+    gl.vertexAttribPointer(fencePosAttrib, // vertex attribute to modify
+        3, // how many elements per attribute
+        gl.FLOAT, // type of individual element
+        false, //normalize
+        6 * szFLOAT, //stride
+        0 //offset from start of buffer
+    );
+
     /////
     /////
     const fpsElem = document.querySelector("#fps").lastChild;
@@ -282,62 +180,28 @@ async function main() {
     let deltaTime = 1;
 
     gl.enable(gl.DEPTH_TEST);
-    let viewMat = new Array(16);
 
     let camera = new Camera();
+    camera.configureCameraListeners(canvas);
 
-    //camera.Move("F", deltaTime )
-
-    canvas.addEventListener('keydown', e => {
-        if (e.key == "w")
-            camera.keysDown.w = true;
-        if (e.key == "a")
-            camera.keysDown.a = true;
-        if (e.key == "s")
-            camera.keysDown.s = true;
-        if (e.key == "d")
-            camera.keysDown.d = true;
-    })
-
-    canvas.addEventListener('keyup', e => {
-        if (e.key == "w")
-            camera.keysDown.w = false;
-        if (e.key == "a")
-            camera.keysDown.a = false;
-        if (e.key == "s")
-            camera.keysDown.s = false;
-        if (e.key == "d")
-            camera.keysDown.d = false;
-    })
-
-    let firstLook = false;
-    camera.updateVectors();
-
-    canvas.addEventListener('click', e =>
-    {
-        firstLook = true;
-        canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
-        canvas.requestPointerLock();
-    })
-
-    canvas.addEventListener('mousemove', e => {
-        if (document.pointerLockElement === canvas)
-        {
-            if (firstLook)
-            {
-                firstLook = false;
-                camera.Look(0, 0);
-            }
-            else {
-                camera.Look(e.movementX, e.movementY);
-            }
-        }
-    })
 
     let playerPositions = [
         [0, 0, 0],
         [0, 0, 2],
         [1, 1, 0],
+    ]
+
+    let fencePositions = [
+        {
+            origin: [5, 1, 0],
+            sideways: false,
+            flat: true
+        },
+        {
+            origin: [7, 0, 0],
+            sideways: true,
+            flat: false
+        }
     ]
 
     //render loop
@@ -360,14 +224,14 @@ async function main() {
         //
 
         // Calculate program independent matrices
-            let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 30);
+            let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.01, 30);
             camera.Move(deltaTime);
-            let c = camera.getCameraMatrix();
-            invertMat4(c, viewMat);
+            let viewMat = camera.getViewMatrix();
         //
 
         // Draw Grid 
             gl.useProgram(gridProgram);
+            gl.bindVertexArray(gridVAO);
 
             let projLoc = gl.getUniformLocation(gridProgram, "projection");
             gl.uniformMatrix4fv(projLoc, false, p);
@@ -375,17 +239,17 @@ async function main() {
             let camLoc = gl.getUniformLocation(gridProgram, "camera");
             gl.uniformMatrix4fv(camLoc, false, viewMat);
 
-            let modelMat = identity();//translate(cellX, cellY, cellZ, identity());
+            let modelMat = identity();
             let modelLoc = gl.getUniformLocation(gridProgram, "model");
             gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-            gl.bindVertexArray(gridVAO);
             gl.drawArrays(gl.LINES, 0, gridData.length);
         //
 
         // Draw Players
 
             gl.useProgram(playerProgram);
+            gl.bindVertexArray(playerVAO);
 
             projLoc = gl.getUniformLocation(playerProgram, "projection");
             gl.uniformMatrix4fv(projLoc, false, p);
@@ -399,8 +263,31 @@ async function main() {
                 modelLoc = gl.getUniformLocation(playerProgram, "model");
                 gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                gl.bindVertexArray(playerVAO);
                 gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+            })
+        //
+
+        // Draw Fences
+            gl.useProgram(fenceProgram);
+            gl.bindVertexArray(fenceVAO);
+
+            projLoc = gl.getUniformLocation(fenceProgram, "projection");
+            gl.uniformMatrix4fv(projLoc, false, p);
+
+            camLoc = gl.getUniformLocation(fenceProgram, "camera");
+            gl.uniformMatrix4fv(camLoc, false, viewMat);
+
+            fencePositions.forEach(pos => {
+                modelMat = translate (...pos.origin, identity());
+                if (pos.flat)
+                    modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
+                if (pos.sideways)
+                    modelMat = rotationXZ(Math.PI / 2, modelMat);
+
+                modelLoc = gl.getUniformLocation(fenceProgram, "model");
+                gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length);
             })
 
         //

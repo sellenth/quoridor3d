@@ -1,9 +1,19 @@
-export function subtractVec3(a, b)
+export function addVec3(a, b)
+{
+    return [ a[0] + b[0], a[1] + b[1],  a[2] + b[2] ];
+}
+
+export function subVec3(a, b)
 {
     return [ a[0] - b[0], a[1] - b[1],  a[2] - b[2] ];
 }
 
-export function crossProduct(a, b)
+export function scaleVec3(a, m)
+{
+    return [ a[0] * m, a[1] * m, a[2] * m];
+}
+
+export function crossProductVec3(a, b)
 {
     return [
         a[1] * b[2] - a[2] * b[1], 
@@ -71,6 +81,18 @@ export function rotationXZ(rad, m)
     ])
 }
 
+export function rotationYZ(rad, m)
+{
+    let c = Math.cos(rad);
+    let s = Math.sin(rad);
+    return multiply(m, [
+        1, 0, 0, 0,
+        0, c, -s, 0,
+        0, s, c, 0,
+        0, 0,  0, 1,
+    ])
+}
+
 export function normalizeVec3(v)
 {
     let mag = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -87,8 +109,8 @@ export function normalizeVec3(v)
 export function lookForward(camPos, upVec, front)
 {
     let zAxis = normalizeVec3(front);
-    let xAxis = normalizeVec3(crossProduct( zAxis, upVec ));
-    let yAxis = normalizeVec3(crossProduct( xAxis, zAxis ));
+    let xAxis = normalizeVec3(crossProductVec3( zAxis, upVec ));
+    let yAxis = normalizeVec3(crossProductVec3( xAxis, zAxis ));
 
     return [
          xAxis[0],  xAxis[1],  xAxis[2], 0,
@@ -101,9 +123,9 @@ export function lookForward(camPos, upVec, front)
 
 export function lookAt(camPos, upVec, lookAt)
 {
-    let zAxis = normalizeVec3(subtractVec3(camPos, lookAt));
-    let xAxis = normalizeVec3(crossProduct( zAxis, upVec ));
-    let yAxis = normalizeVec3(crossProduct( xAxis, zAxis ));
+    let zAxis = normalizeVec3(subVec3(camPos, lookAt));
+    let xAxis = normalizeVec3(crossProductVec3( zAxis, upVec ));
+    let yAxis = normalizeVec3(crossProductVec3( xAxis, zAxis ));
 
     return [
          xAxis[0],  xAxis[1],  xAxis[2], 0,
@@ -129,7 +151,7 @@ export function projection(fieldOfViewInRadians, aspect, near, far)
     ];
 }
 
-export function invertMat4(m, invOut)
+export function invertMat4(m)
 {
     let inv = new Array(16);
     let det = 0;
@@ -250,14 +272,17 @@ export function invertMat4(m, invOut)
     det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
 
     if (det == 0)
+    {
+        console.error("Matrix can't be inverted");
         return false;
+    }
 
     det = 1.0 / det;
 
     for (i = 0; i < 16; i++)
-        invOut[i] = inv[i] * det;
+        inv[i] *= det;
 
-    return true;
+    return inv;
 }
 
 export function identity()
