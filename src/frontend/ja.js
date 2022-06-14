@@ -1,7 +1,7 @@
 import vss from "./vs.js";
 import fss from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
-import {identity, translate, projection, invertMat4, rotationYZ, rotationXY, rotationXZ} from "./math.js"
+import {identity, translate, projection, addVec3, rotationYZ, rotationXY, rotationXZ, scale} from "./math.js"
 import { Camera } from "./camera.js";
 
 const szFLOAT = 4;
@@ -66,19 +66,6 @@ async function main() {
         3 * szFLOAT, //stride
         0 //offset from start of buffer
     );
-
-    /*
-    gl.enableVertexAttribArray(colorAttribLocation);
-
-    // binds currently bound array_buffer (positionBuffer) & ebo (elBuff) to this attribPointer
-    gl.vertexAttribPointer(colorAttribLocation, // vertex attribute to modify
-        3, // how many elements per attribute
-        gl.FLOAT, // type of individual element
-        false, //normalize
-        6 * szFLOAT, //stride
-        3 * szFLOAT //offset from start of buffer
-    );
-    */
 
     let playerProgram = createProgram(gl, vs, fs);
     let playerPosAttrib = gl.getAttribLocation(playerProgram, "a_position");
@@ -181,17 +168,23 @@ async function main() {
 
     gl.enable(gl.DEPTH_TEST);
 
-    let camera = new Camera();
-    camera.configureCameraListeners(canvas);
+    let myTurn = true;
+    let cursorPos = {p: [1, 0, 0]};
+    let players = 
+    [
+        {
+            pos: [4, 4, 0],
+            color: [255, 0, 0],
+        },
+        {
+            pos: [4, 4, 8],
+            color: [0, 255, 0],
+        }
+    ];
 
 
-    let playerPositions = [
-        [0, 0, 0],
-        [0, 0, 2],
-        [1, 1, 0],
-    ]
-
-    let fencePositions = [
+    let fencePositions = 
+    [
         {
             origin: [5, 1, 0],
             sideways: false,
@@ -202,7 +195,10 @@ async function main() {
             sideways: true,
             flat: false
         }
-    ]
+    ];
+
+    let camera = new Camera();
+    camera.configureCameraListeners(canvas, cursorPos);
 
     //render loop
     while (true)
@@ -257,14 +253,31 @@ async function main() {
             camLoc = gl.getUniformLocation(playerProgram, "camera");
             gl.uniformMatrix4fv(camLoc, false, viewMat);
 
-            playerPositions.forEach(pos => {
-                modelMat = translate (...pos, identity());
+            players.forEach(player => {
+                modelMat = translate(...addVec3(player.pos, [.2, .2, .2]), identity());
+                modelMat = scale(0.6, 0.6, 0.6, modelMat);
+
+                let colorLoc = gl.getUniformLocation(playerProgram, "color");
+                gl.uniform3fv(colorLoc, player.color);
 
                 modelLoc = gl.getUniformLocation(playerProgram, "model");
                 gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
                 gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
             })
+
+            if (myTurn)
+            {
+                modelMat = translate(...addVec3(players[0].pos, cursorPos.p), identity());
+
+                let colorLoc = gl.getUniformLocation(playerProgram, "color");
+                gl.uniform3fv(colorLoc, [0, 0, 255]);
+
+                modelLoc = gl.getUniformLocation(playerProgram, "model");
+                gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+            }
         //
 
         // Draw Fences

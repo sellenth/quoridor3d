@@ -79,7 +79,7 @@ export class Camera {
         this.updateVectors();
     }
 
-    configureCameraListeners(canvas)
+    configureCameraListeners(canvas, cursor)
     {
 
         canvas.addEventListener('keydown', e => {
@@ -91,6 +91,18 @@ export class Camera {
                 this.keysDown.s = true;
             if (e.key == "d")
                 this.keysDown.d = true;
+            if (e.key == "ArrowRight")
+                cursor.p = [1, 0, 0];
+            if (e.key == "ArrowLeft")
+                cursor.p = [-1, 0, 0];
+            if (e.key == "ArrowUp")
+                cursor.p = [0, 0, 1];
+            if (e.key == "ArrowDown")
+                cursor.p = [0, 0, -1];
+            if (e.ctrlKey)
+                cursor.p = [0, -1, 0];
+            if (e.key == " ")
+                cursor.p = [0, 1, 0];
         })
 
         canvas.addEventListener('keyup', e => {

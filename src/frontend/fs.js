@@ -3,13 +3,13 @@ const glsl = x => x;
 let fss = glsl`#version 300 es
     precision highp float;
     
-    in vec3  Color;
 
+    uniform vec3 color;
     out vec4 outColor;
     
     void main() {
         //outColor = vec4(1, 0, 0.5, 1);
-        outColor = vec4(Color, 0.2);
+        outColor = vec4(color, 0.2);
     }
 `;
 
