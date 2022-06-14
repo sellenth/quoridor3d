@@ -9,7 +9,7 @@ let fss = glsl`#version 300 es
     
     void main() {
         //outColor = vec4(1, 0, 0.5, 1);
-        outColor = vec4(Color, 1.);
+        outColor = vec4(Color, 0.2);
     }
 `;
 

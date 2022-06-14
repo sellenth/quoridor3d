@@ -55,7 +55,7 @@ class Camera {
     #frontVec = new Vec3(0, 0, 1);
     #rightVec = new Vec3(1, 0, 0);
     #upVec = new Vec3(0, 1, 0);
-    #position = new Vec3(0, 0, -5);
+    #position = new Vec3(0, 0, -15);
     #yaw = -89;
     #pitch = 0;
     #moveSpeed = 10;
@@ -149,7 +149,7 @@ class Camera {
 
 async function main() {
     let canvas = document.querySelector("#c");
-
+    const gridSize = 10;
 
     /** type {WebGLRenderingContext} */
     let gl = canvas.getContext("webgl2");
@@ -162,57 +162,32 @@ async function main() {
     let fs = createShader(gl, gl.FRAGMENT_SHADER, fss);
 
 
-    let program = createProgram(gl, vs, fs);
-    let positionAttribLocation = gl.getAttribLocation(program, "a_position");
-    let colorAttribLocation = gl.getAttribLocation(program, "a_color");
+    let gridProgram = createProgram(gl, vs, fs);
+    let positionAttribLocation = gl.getAttribLocation(gridProgram, "a_position");
 
-
-
-    let vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    let gridVAO = gl.createVertexArray();
+    gl.bindVertexArray(gridVAO);
 
     let buff = gl.createBuffer();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buff);
 
-    let cubeData = [
-        -.5, -.5, -.5,      255, 0, 0,
-         .5, -.5, -.5,      255, 0, 0,
-         .5,  .5, -.5,      255, 0, 0,
-        -.5,  .5, -.5,      255, 0, 0,
+    let gridData = [];
 
-        -.5, -.5,  .5,      0, 255, 0,
-         .5, -.5,  .5,      0, 255, 0,
-         .5,  .5,  .5,      0, 255, 0,
-        -.5,  .5,  .5,      0, 255, 0,
+    for (let a = 0; a < gridSize; a++)
+    {
+        for (let b = 0; b < gridSize; b++)
+        {
+            gridData.push(0, a, b,
+                          gridSize - 1, a, b);
 
+            gridData.push( a, b, 0,
+                           a, b, gridSize - 1);
+        }
 
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeData), gl.STATIC_DRAW);
+    }
 
-    let elBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elBuff);
-
-    let elements = [
-        0, 1,
-        1, 2,
-        2, 3,
-        3, 0,
-
-        4, 5,
-        5, 6,
-        6, 7,
-        7, 4,
-
-        0, 4,
-        1, 5,
-        2, 6,
-        3, 7
-    ]
-
-
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);
-
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gridData), gl.STATIC_DRAW);
 
     gl.enableVertexAttribArray(positionAttribLocation);
 
@@ -221,10 +196,11 @@ async function main() {
         3, // how many elements per attribute
         gl.FLOAT, // type of individual element
         false, //normalize
-        6 * szFLOAT, //stride
+        3 * szFLOAT, //stride
         0 //offset from start of buffer
     );
 
+    /*
     gl.enableVertexAttribArray(colorAttribLocation);
 
     // binds currently bound array_buffer (positionBuffer) & ebo (elBuff) to this attribPointer
@@ -235,9 +211,67 @@ async function main() {
         6 * szFLOAT, //stride
         3 * szFLOAT //offset from start of buffer
     );
+    */
 
-    //logMatrix(scale(1/400, 1/400, translate(5, 5, identity())));
+    let playerProgram = createProgram(gl, vs, fs);
+    let playerPosAttrib = gl.getAttribLocation(playerProgram, "a_position");
 
+    let playerVAO = gl.createVertexArray();
+    gl.bindVertexArray(playerVAO);
+
+    let buff2 = gl.createBuffer();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, buff2);
+
+    let cubeData = [
+        0, 0, 0,      255, 0, 0,
+        1, 0, 0,      255, 0, 0,
+        1, 1, 0,      255, 0, 0,
+        0, 1, 0,      255, 0, 0,
+
+        0, 0, 1,      0, 255, 0,
+        1, 0, 1,      0, 255, 0,
+        1, 1, 1,      0, 255, 0,
+        0, 1, 1,      0, 255, 0,
+
+
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeData), gl.STATIC_DRAW);
+
+    let elBuff = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elBuff);
+    let elements = [
+        0, 1, 2,
+        0, 2, 3,
+
+        4, 5, 6,
+        4, 6, 7,
+
+        0, 3, 4,
+        3, 4, 7,
+
+        1, 5, 6,
+        1, 2, 6,
+
+        0, 1, 4,
+        1, 4, 5,
+
+        2, 3, 6,
+        3, 6, 7
+    ]
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);
+
+
+    gl.enableVertexAttribArray(playerPosAttrib);
+
+    // binds currently bound array_buffer (positionBuffer) & ebo (elBuff) to this attribPointer
+    gl.vertexAttribPointer(playerPosAttrib, // vertex attribute to modify
+        3, // how many elements per attribute
+        gl.FLOAT, // type of individual element
+        false, //normalize
+        6 * szFLOAT, //stride
+        0 //offset from start of buffer
+    );
 
     /////
     /////
@@ -248,7 +282,6 @@ async function main() {
     let deltaTime = 1;
 
     gl.enable(gl.DEPTH_TEST);
-    const gridSize = 10;
     let viewMat = new Array(16);
 
     let camera = new Camera();
@@ -301,57 +334,78 @@ async function main() {
         }
     })
 
+    let playerPositions = [
+        [0, 0, 0],
+        [0, 0, 2],
+        [1, 1, 0],
+    ]
 
     //render loop
     while (true)
     {
-        let now = new Date().getTime() * .001;
-        deltaTime = now - then;
-        then = now;
-        const fps = 1 / deltaTime;
-        // a neat premature optimization 
-        // https://www.measurethat.net/Benchmarks/Show/9727/0/parseint-vs-tofixed-vs
-        fpsElem.textContent = ~~fps;
+        // Prepare Buffer
+            let now = new Date().getTime() * .001;
+            deltaTime = now - then;
+            then = now;
+            const fps = 1 / deltaTime;
+            // a neat premature optimization 
+            // https://www.measurethat.net/Benchmarks/Show/9727/0/parseint-vs-tofixed-vs
+            fpsElem.textContent = ~~fps;
 
-        resizeCanvasToDisplaySize(gl.canvas);
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+            resizeCanvasToDisplaySize(gl.canvas);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //
 
-        gl.useProgram(program);
+        // Calculate program independent matrices
+            let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 30);
+            camera.Move(deltaTime);
+            let c = camera.getCameraMatrix();
+            invertMat4(c, viewMat);
+        //
 
-        let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 30);
-        let projLoc = gl.getUniformLocation(program, "projection");
-        gl.uniformMatrix4fv(projLoc, false, p);
+        // Draw Grid 
+            gl.useProgram(gridProgram);
 
-        //let c = lookAt([0, 0, -5], [0, 1, 0], [0, 0, 0]);
-        camera.Move(deltaTime);
-        console.log(camera.getPosition())
-        let c = camera.getCameraMatrix();
-        invertMat4(c, viewMat);
-        let camLoc = gl.getUniformLocation(program, "camera");
-        gl.uniformMatrix4fv(camLoc, false, viewMat);
+            let projLoc = gl.getUniformLocation(gridProgram, "projection");
+            gl.uniformMatrix4fv(projLoc, false, p);
 
-        gl.bindVertexArray(vao);
-        for (let cellX = 0; cellX < gridSize; cellX++)
-        {
-            for (let cellY = 0; cellY < gridSize; cellY++)
-            {
-                for (let cellZ = 0; cellZ < gridSize; cellZ++)
-                {
+            let camLoc = gl.getUniformLocation(gridProgram, "camera");
+            gl.uniformMatrix4fv(camLoc, false, viewMat);
 
-                    let modelMat = translate(cellX, cellY, cellZ, identity());
-                    let rotLoc = gl.getUniformLocation(program, "model");
-                    gl.uniformMatrix4fv(rotLoc, false, modelMat);
+            let modelMat = identity();//translate(cellX, cellY, cellZ, identity());
+            let modelLoc = gl.getUniformLocation(gridProgram, "model");
+            gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                    gl.drawElements(gl.LINES, 24, gl.UNSIGNED_SHORT, 0);
-                }
-            }
+            gl.bindVertexArray(gridVAO);
+            gl.drawArrays(gl.LINES, 0, gridData.length);
+        //
 
-        }
+        // Draw Players
 
-        await sleep(15);
+            gl.useProgram(playerProgram);
+
+            projLoc = gl.getUniformLocation(playerProgram, "projection");
+            gl.uniformMatrix4fv(projLoc, false, p);
+
+            camLoc = gl.getUniformLocation(playerProgram, "camera");
+            gl.uniformMatrix4fv(camLoc, false, viewMat);
+
+            playerPositions.forEach(pos => {
+                modelMat = translate (...pos, identity());
+
+                modelLoc = gl.getUniformLocation(playerProgram, "model");
+                gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                gl.bindVertexArray(playerVAO);
+                gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+            })
+
+        //
+
+        await sleep(16);
     }
 }
 
