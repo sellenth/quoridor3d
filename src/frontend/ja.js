@@ -3,6 +3,7 @@ import fss from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
 import {identity, translate, projection, addVec3, rotationYZ, rotationXY, rotationXZ, scale} from "./math.js"
 import { Camera } from "./camera.js";
+import { GameLogic } from "./lo.js";
 
 const szFLOAT = 4;
 
@@ -16,7 +17,13 @@ function logMatrix(m)
 
 async function main() {
     let canvas = document.querySelector("#c");
-    const gridSize = 10;
+
+    let gameLogic = new GameLogic();
+
+    let camera = new Camera();
+    camera.configureCameraListeners(canvas, gameLogic);
+    camera.SetExtents([gameLogic.gridSizeXY, gameLogic.gridLayers, gameLogic.gridSizeXY ]);
+
 
     /** type {WebGLRenderingContext} */
     let gl = canvas.getContext("webgl2");
@@ -41,17 +48,23 @@ async function main() {
 
     let gridData = [];
 
-    for (let a = 0; a < gridSize; a++)
+    for (let a = 0; a < gameLogic.gridSizeXY; a++)
     {
-        for (let b = 0; b < gridSize; b++)
+        for (let b = 0; b < gameLogic.gridLayers; b++)
         {
-            gridData.push(0, a, b,
-                          gridSize - 1, a, b);
-
-            gridData.push( a, b, 0,
-                           a, b, gridSize - 1);
+            gridData.push(0, b, a,
+                          gameLogic.gridSizeXY - 1, b, a);
         }
 
+    }
+
+    for (let a = 0; a < gameLogic.gridSizeXY; a++)
+    {
+        for (let b = 0; b < gameLogic.gridLayers; b++)
+        {
+            gridData.push( a, b, 0,
+                           a, b, gameLogic.gridSizeXY - 1);
+        }
     }
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gridData), gl.STATIC_DRAW);
@@ -168,37 +181,6 @@ async function main() {
 
     gl.enable(gl.DEPTH_TEST);
 
-    let myTurn = true;
-    let cursorPos = {p: [1, 0, 0]};
-    let players = 
-    [
-        {
-            pos: [4, 4, 0],
-            color: [255, 0, 0],
-        },
-        {
-            pos: [4, 4, 8],
-            color: [0, 255, 0],
-        }
-    ];
-
-
-    let fencePositions = 
-    [
-        {
-            origin: [5, 1, 0],
-            sideways: false,
-            flat: true
-        },
-        {
-            origin: [7, 0, 0],
-            sideways: true,
-            flat: false
-        }
-    ];
-
-    let camera = new Camera();
-    camera.configureCameraListeners(canvas, cursorPos);
 
     //render loop
     while (true)
@@ -253,7 +235,7 @@ async function main() {
             camLoc = gl.getUniformLocation(playerProgram, "camera");
             gl.uniformMatrix4fv(camLoc, false, viewMat);
 
-            players.forEach(player => {
+            gameLogic.players.forEach(player => {
                 modelMat = translate(...addVec3(player.pos, [.2, .2, .2]), identity());
                 modelMat = scale(0.6, 0.6, 0.6, modelMat);
 
@@ -266,9 +248,9 @@ async function main() {
                 gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
             })
 
-            if (myTurn)
+            if (gameLogic.cursorMode == "pawn")
             {
-                modelMat = translate(...addVec3(players[0].pos, cursorPos.p), identity());
+                modelMat = translate(...addVec3(gameLogic.getActivePlayer().pos, gameLogic.cursor.pos), identity());
 
                 let colorLoc = gl.getUniformLocation(playerProgram, "color");
                 gl.uniform3fv(colorLoc, [0, 0, 255]);
@@ -290,11 +272,11 @@ async function main() {
             camLoc = gl.getUniformLocation(fenceProgram, "camera");
             gl.uniformMatrix4fv(camLoc, false, viewMat);
 
-            fencePositions.forEach(pos => {
-                modelMat = translate (...pos.origin, identity());
-                if (pos.flat)
+            gameLogic.fencePositions.forEach(fence => {
+                modelMat = translate (...fence.pos, identity());
+                if (fence.flat)
                     modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
-                if (pos.sideways)
+                if (fence.sideways)
                     modelMat = rotationXZ(Math.PI / 2, modelMat);
 
                 modelLoc = gl.getUniformLocation(fenceProgram, "model");
@@ -302,6 +284,21 @@ async function main() {
 
                 gl.drawArrays(gl.TRIANGLES, 0, fenceData.length);
             })
+
+            if (gameLogic.cursorMode == "fence")
+            {
+                modelMat = translate (...gameLogic.cursor.pos, identity());
+                if (gameLogic.cursor.flat)
+                    modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
+                else if (gameLogic.cursor.sideways)
+                    modelMat = rotationXZ(Math.PI / 2, modelMat);
+
+                modelLoc = gl.getUniformLocation(fenceProgram, "model");
+                gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length);
+
+            }
 
         //
 

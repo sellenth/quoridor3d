@@ -9,12 +9,19 @@ export class Camera {
     #pitch = 0;
     #moveSpeed = 10;
     #mouseSens = 0.1;
+    #spaceExtents = [10, 10, 10];
     keysDown = {};
     firstLook = true;
 
     constructor()
     {
         this.updateVectors();
+    }
+
+    SetExtents(extents)
+    {
+        this.#spaceExtents = extents
+        console.log(this.#spaceExtents);
     }
 
     Move(deltaTime)
@@ -33,6 +40,17 @@ export class Camera {
         if (this.keysDown.d) {
             this.#position = addVec3(this.#position, scaleVec3(this.#rightVec, velocity));
         }
+
+        this.#position.forEach((_, i, arr) => {
+            const padding = 5.;
+            if (arr[i] < 0 - padding)
+                arr[i] = -padding;
+            else if (arr[i] > this.#spaceExtents[i] + padding)
+            {
+                console.log(this.#spaceExtents[i])
+                arr[i] = this.#spaceExtents[i] + padding;
+            }
+        })
     }
 
     updateVectors()
@@ -79,7 +97,7 @@ export class Camera {
         this.updateVectors();
     }
 
-    configureCameraListeners(canvas, cursor)
+    configureCameraListeners(canvas, gameLogic)
     {
 
         canvas.addEventListener('keydown', e => {
@@ -92,17 +110,25 @@ export class Camera {
             if (e.key == "d")
                 this.keysDown.d = true;
             if (e.key == "ArrowRight")
-                cursor.p = [1, 0, 0];
+                gameLogic.MoveCursorRight();
             if (e.key == "ArrowLeft")
-                cursor.p = [-1, 0, 0];
+                gameLogic.MoveCursorLeft();
             if (e.key == "ArrowUp")
-                cursor.p = [0, 0, 1];
+                gameLogic.MoveCursorFront();
             if (e.key == "ArrowDown")
-                cursor.p = [0, 0, -1];
+                gameLogic.MoveCursorBack();
             if (e.ctrlKey)
-                cursor.p = [0, -1, 0];
+                gameLogic.MoveCursorDown();
             if (e.key == " ")
-                cursor.p = [0, 1, 0];
+                gameLogic.MoveCursorUp();
+            if (e.key == "Enter")
+                gameLogic.commitMove();
+            if (e.key == "c")
+                gameLogic.switchCursorMode();
+            if (e.key == "f")
+                gameLogic.toggleCursorFlat();
+            if (e.key == "r")
+                gameLogic.toggleCursorRotate();
         })
 
         canvas.addEventListener('keyup', e => {
