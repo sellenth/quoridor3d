@@ -27,7 +27,7 @@ async function main() {
 
 
     /** type {WebGLRenderingContext} */
-    let gl = canvas.getContext("webgl2");
+    let gl = canvas.getContext("webgl2", {premultipliedAlpha: false});
     if (!gl) {
         alert("You need a webGL compatible browser")
     }
@@ -183,7 +183,7 @@ async function main() {
     gl.enable(gl.DEPTH_TEST);
 
 
-    //render loop
+    // render loop
     while (true)
     {
         // Prepare Buffer
@@ -201,12 +201,12 @@ async function main() {
         //
 
         // Calculate program independent matrices
-            let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.01, 30);
+            let p = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 50);
             camera.Move(deltaTime);
             let viewMat = camera.getViewMatrix();
         //
 
-        // Draw Grid 
+        // Draw Grid
             gl.useProgram(gridProgram);
             gl.bindVertexArray(gridVAO);
 
