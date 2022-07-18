@@ -1,16 +1,23 @@
+import { GameLogic } from "./gameLogic"
+import { Vec3 } from "./types"
 import {crossProductVec3, subVec3, addVec3, scaleVec3, normalizeVec3, cos_d, sin_d, invertMat4} from "./math.js"
 
 export class Camera {
-    #frontVec = [0, 0, 1];
-    #rightVec = [1, 0, 0];
-    #upVec    = [0, 1, 0];
-    #position = [5, 3, -5];
+    #frontVec: Vec3 = [0, 0, 1];
+    #rightVec: Vec3 = [1, 0, 0];
+    #upVec: Vec3    = [0, 1, 0];
+    #position: Vec3 = [5, 3, -5];
     #yaw = -89;
     #pitch = 0;
     #moveSpeed = 10;
     #mouseSens = 0.1;
-    #spaceExtents = [10, 10, 10];
-    keysDown = {};
+    #spaceExtents: Vec3 = [10, 10, 10];
+    keysDown = {
+        a: false,
+        w: false,
+        s: false,
+        d: false,
+    };
     firstLook = true;
 
     constructor()
@@ -18,13 +25,13 @@ export class Camera {
         this.updateVectors();
     }
 
-    SetExtents(extents)
+    SetExtents(extents: Vec3)
     {
         this.#spaceExtents = extents
         console.log(this.#spaceExtents);
     }
 
-    Move(deltaTime)
+    Move(deltaTime: number)
     {
         let velocity = this.#moveSpeed * deltaTime;
         if (this.keysDown.w)
@@ -55,7 +62,7 @@ export class Camera {
 
     updateVectors()
     {
-        let front = [0, 0, 0];
+        let front: Vec3 = [0, 0, 0];
         front[0] = cos_d(this.#yaw) * cos_d(this.#pitch);
         front[1] = sin_d(this.#pitch);
         front[2] = sin_d(this.#yaw) * cos_d(this.#pitch);
@@ -81,7 +88,7 @@ export class Camera {
         return invertMat4(this.getCameraMatrix());
     }
 
-    Look(xOffset, yOffset)
+    Look(xOffset: number, yOffset: number)
     {
         xOffset *= this.#mouseSens;
         yOffset *= this.#mouseSens;
@@ -97,7 +104,7 @@ export class Camera {
         this.updateVectors();
     }
 
-    configureCameraListeners(canvas, gameLogic)
+    configureCameraListeners(canvas: HTMLCanvasElement, gameLogic: GameLogic)
     {
 
         canvas.addEventListener('keydown', e => {
@@ -144,7 +151,7 @@ export class Camera {
 
         canvas.addEventListener('click', e => {
             this.firstLook = true;
-            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+            canvas.requestPointerLock = canvas.requestPointerLock;
             canvas.requestPointerLock();
         })
 

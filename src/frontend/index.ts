@@ -1,13 +1,14 @@
+import { Mat4, Vec3  } from "./types.js"
 import vss from "./vs.js";
 import fss from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
 import {identity, translate, projection, addVec3, rotationYZ, rotationXY, rotationXZ, scale} from "./math.js"
 import { Camera } from "./camera.js";
-import { GameLogic } from "./lo.js";
+import { GameLogic } from "./gameLogic.js";
 
 const szFLOAT = 4;
 
-function logMatrix(m)
+function logMatrix(m: Mat4)
 {
     for (let i = 0; i < 4; i++)
     {
@@ -16,7 +17,7 @@ function logMatrix(m)
 }
 
 async function main() {
-    let canvas = document.querySelector("#c");
+    let canvas: HTMLCanvasElement = document.querySelector("#c");
 
     let gameLogic = new GameLogic();
 
@@ -190,11 +191,9 @@ async function main() {
             deltaTime = now - then;
             then = now;
             const fps = 1 / deltaTime;
-            // a neat premature optimization 
-            // https://www.measurethat.net/Benchmarks/Show/9727/0/parseint-vs-tofixed-vs
-            fpsElem.textContent = ~~fps;
+            fpsElem.textContent = fps.toFixed();
 
-            resizeCanvasToDisplaySize(gl.canvas);
+            resizeCanvasToDisplaySize(gl.canvas, 1);
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
             gl.clearColor(0, 0, 0, 0);

@@ -1,17 +1,18 @@
+import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
 
 export class GameLogic {
-    gridSizeXY = 10;
-    gridLayers = 4;
-    activePlayer = 1;
-    cursor = {
+    gridSizeXY: number = 10;
+    gridLayers: number = 4;
+    activePlayer: number = 1;
+    cursor: Cursor = {
         pos: [1, 0, 0],
         flat: false,
         sideways: false,
     }
     cursorMode = "fence";
-    players;
-    fencePositions;
+    players: Player[];
+    fencePositions: Cursor[];
 
     constructor() {
         this.players =
@@ -47,7 +48,7 @@ export class GameLogic {
         return this.players[this.activePlayer];
     }
 
-    MoveCursor(v)
+    MoveCursor(v: Vec3)
     {
         if (this.cursorMode == "pawn")
         {

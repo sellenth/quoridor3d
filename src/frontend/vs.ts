@@ -1,6 +1,4 @@
-const glsl = x => x;
-
-let vss = glsl`#version 300 es
+let vss = `#version 300 es
     in vec4 a_position;
 
     uniform mat4 projection;

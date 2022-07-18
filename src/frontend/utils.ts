@@ -1,8 +1,8 @@
-export function createShader(gl, type, source) {
-    var shader = gl.createShader(type);
+export function createShader(gl: WebGL2RenderingContext, type: GLuint, source: string) {
+    let shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
     if (success) {
         return shader;
     }
@@ -11,12 +11,12 @@ export function createShader(gl, type, source) {
     gl.deleteShader(shader);
 }
 
-export function createProgram(gl, vertexShader, fragmentShader) {
-    var program = gl.createProgram();
+export function createProgram(gl: WebGL2RenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+    let program = gl.createProgram();
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    let success = gl.getProgramParameter(program, gl.LINK_STATUS);
     if (success) {
         return program;
     }
@@ -26,7 +26,7 @@ export function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 
-export function resizeCanvasToDisplaySize(canvas, multiplier) {
+export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement, multiplier: number): boolean {
     multiplier = multiplier || 1;
     const width  = canvas.clientWidth  * multiplier | 0;
     const height = canvas.clientHeight * multiplier | 0;
@@ -38,6 +38,6 @@ export function resizeCanvasToDisplaySize(canvas, multiplier) {
     return false;
   }
 
-export function sleep(ms) {
+export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

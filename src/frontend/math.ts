@@ -1,19 +1,21 @@
-export function addVec3(a, b)
+import { Vec3, Mat4 } from "./types"
+
+export function addVec3(a: Vec3, b: Vec3): Vec3
 {
     return [ a[0] + b[0], a[1] + b[1],  a[2] + b[2] ];
 }
 
-export function subVec3(a, b)
+export function subVec3(a: Vec3, b: Vec3): Vec3
 {
     return [ a[0] - b[0], a[1] - b[1],  a[2] - b[2] ];
 }
 
-export function scaleVec3(a, m)
+export function scaleVec3(a: Vec3, m: number): Vec3
 {
     return [ a[0] * m, a[1] * m, a[2] * m];
 }
 
-export function crossProductVec3(a, b)
+export function crossProductVec3(a: Vec3, b: Vec3): Vec3
 {
     return [
         a[1] * b[2] - a[2] * b[1], 
@@ -22,7 +24,7 @@ export function crossProductVec3(a, b)
     ]
 }
 
-export function translate(x, y, z, m)
+export function translate(x: number, y: number, z: number, m: Mat4): Mat4
 {
     return multiply (m, [
         1, 0, 0, 0,
@@ -32,7 +34,7 @@ export function translate(x, y, z, m)
     ]);
 }
 
-export function scale(x, y, z, m)
+export function scale(x: number, y: number, z: number, m: Mat4): Mat4
 {
     return multiply (m, [
         x, 0, 0, 0,
@@ -42,22 +44,22 @@ export function scale(x, y, z, m)
     ])
 }
 
-export function cos_d(d)
+export function cos_d(d: number): number
 {
     return (Math.cos(d * Math.PI / 180));
 }
 
-export function sin_d(d)
+export function sin_d(d: number): number
 {
     return (Math.sin(d * Math.PI / 180));
 }
 
-export function tan_d(d)
+export function tan_d(d: number): number
 {
     return (Math.tan(d * Math.PI / 180));
 }
 
-export function rotationXY(rad, m)
+export function rotationXY(rad: number, m: Mat4): Mat4
 {
     let c = Math.cos(rad);
     let s = Math.sin(rad);
@@ -69,7 +71,7 @@ export function rotationXY(rad, m)
     ])
 }
 
-export function rotationXZ(rad, m)
+export function rotationXZ(rad: number, m: Mat4): Mat4
 {
     let c = Math.cos(rad);
     let s = Math.sin(rad);
@@ -81,7 +83,7 @@ export function rotationXZ(rad, m)
     ])
 }
 
-export function rotationYZ(rad, m)
+export function rotationYZ(rad: number, m: Mat4): Mat4
 {
     let c = Math.cos(rad);
     let s = Math.sin(rad);
@@ -93,7 +95,7 @@ export function rotationYZ(rad, m)
     ])
 }
 
-export function normalizeVec3(v)
+export function normalizeVec3(v: Vec3): Vec3
 {
     let mag = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 
@@ -106,7 +108,7 @@ export function normalizeVec3(v)
     }
 }
 
-export function lookForward(camPos, upVec, front)
+export function lookForward(camPos: Vec3, upVec: Vec3, front: Vec3): Mat4
 {
     let zAxis = normalizeVec3(front);
     let xAxis = normalizeVec3(crossProductVec3( zAxis, upVec ));
@@ -121,7 +123,7 @@ export function lookForward(camPos, upVec, front)
 
 }
 
-export function lookAt(camPos, upVec, lookAt)
+export function lookAt(camPos: Vec3, upVec: Vec3, lookAt: Vec3): Mat4
 {
     let zAxis = normalizeVec3(subVec3(camPos, lookAt));
     let xAxis = normalizeVec3(crossProductVec3( zAxis, upVec ));
@@ -136,7 +138,7 @@ export function lookAt(camPos, upVec, lookAt)
 
 }
 
-export function projection(fieldOfViewInRadians, aspect, near, far)
+export function projection(fieldOfViewInRadians: number, aspect: number, near: number, far: number): Mat4
 {
    //https://stackoverflow.com/questions/28286057/trying-to-understand-the-math-behind-the-perspective-matrix-in-webgl/28301213#28301213
    //The inner mechinations of math are an enigma
@@ -151,7 +153,7 @@ export function projection(fieldOfViewInRadians, aspect, near, far)
     ];
 }
 
-export function invertMat4(m)
+export function invertMat4(m: Mat4): Mat4
 {
     let inv = new Array(16);
     let det = 0;
@@ -274,7 +276,7 @@ export function invertMat4(m)
     if (det == 0)
     {
         console.error("Matrix can't be inverted");
-        return false;
+        return identity();
     }
 
     det = 1.0 / det;
@@ -285,7 +287,7 @@ export function invertMat4(m)
     return inv;
 }
 
-export function identity()
+export function identity(): Mat4
 {
     return [
         1, 0, 0, 0,
@@ -295,7 +297,7 @@ export function identity()
     ]
 }
 
-export function multiply(m1, m2)
+export function multiply(m1: Mat4, m2: Mat4): Mat4
 {
     return [
         m1[0*4 + 0] * m2[0*4 + 0] + m1[1*4 + 0] * m2[0*4 + 1] + m1[2*4 + 0] * m2[0*4 + 2] + m1[3*4 + 0] * m2[0*4 + 3],

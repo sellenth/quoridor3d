@@ -1,6 +1,4 @@
-const glsl = x => x;
-
-let fss = glsl`#version 300 es
+let fss = `#version 300 es
     precision highp float;
     
 
