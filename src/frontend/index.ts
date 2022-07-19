@@ -26,7 +26,7 @@ async function main() {
     camera.SetExtents([gameLogic.gridSizeXY, gameLogic.gridLayers, gameLogic.gridSizeXY ]);
 
 
-    /** type {WebGLRenderingContext} */
+    /** type {WebGL2RenderingContext} */
     let gl = canvas.getContext("webgl2", {premultipliedAlpha: false});
     if (!gl) {
         alert("You need a webGL compatible browser")
@@ -220,10 +220,10 @@ async function main() {
             let modelLoc = gl.getUniformLocation(gridProgram, "model");
             gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-            gl.drawArrays(gl.LINES, 0, gridData.length);
+            gl.drawArrays(gl.LINES, 0, gridData.length / 3);
         //
 
-        // Draw Players
+      // Draw Players
 
             gl.useProgram(playerProgram);
             gl.bindVertexArray(playerVAO);
@@ -281,7 +281,7 @@ async function main() {
                 modelLoc = gl.getUniformLocation(fenceProgram, "model");
                 gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length);
+                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length / 6);
             })
 
             if (gameLogic.cursorMode == "fence")
@@ -295,10 +295,9 @@ async function main() {
                 modelLoc = gl.getUniformLocation(fenceProgram, "model");
                 gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length);
+                gl.drawArrays(gl.TRIANGLES, 0, fenceData.length / 6);
 
             }
-
         //
 
         await sleep(16);
