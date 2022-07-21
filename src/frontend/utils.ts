@@ -1,3 +1,5 @@
+import { Mat4 } from "./types.js"
+
 export function createShader(gl: WebGL2RenderingContext, type: GLuint, source: string) {
     let shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -40,4 +42,12 @@ export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement, multiplier:
 
 export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function logMatrix(m: Mat4)
+{
+    for (let i = 0; i < 4; i++)
+    {
+        console.log(m[i * 4 + 0], m[i * 4 + 1], m[i * 4 + 2], m[i * 4 + 3]);
+    }
 }
