@@ -28,7 +28,6 @@ export class Camera {
     SetExtents(extents: Vec3)
     {
         this.#spaceExtents = extents
-        console.log(this.#spaceExtents);
     }
 
     Move(deltaTime: number)
@@ -54,7 +53,6 @@ export class Camera {
                 arr[i] = -padding;
             else if (arr[i] > this.#spaceExtents[i] + padding)
             {
-                console.log(this.#spaceExtents[i])
                 arr[i] = this.#spaceExtents[i] + padding;
             }
         })

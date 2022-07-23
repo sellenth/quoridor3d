@@ -20,19 +20,24 @@ class FrameTiming
     then: number;
     deltaTime: number;
     fps: number;
+    elapsed: number;
+    counterElement: Node;
 
     constructor()
     {
-        this.then = new Date().getMilliseconds();
+        this.then = new Date().getTime() * .001;
+        this.counterElement = document.querySelector("#fps").lastChild;
+        this.elapsed = 0.;
     }
 
     tick()
     {
             let now = new Date().getTime() * .001;
             this.deltaTime = now - this.then;
+            this.elapsed += this.deltaTime;
             this.then = now;
             this.fps = 1 / this.deltaTime;
-
+            this.counterElement.textContent = this.fps.toFixed();
     }
 }
 
@@ -53,7 +58,10 @@ class Engine
         this.gl = this.canvas.getContext("webgl2", {premultipliedAlpha: false});
         if (!this.gl) {
             alert("You need a webGL compatible browser")
+            return;
         }
+
+        this.gl.enable(this.gl.DEPTH_TEST);
 
         this.camera = new Camera();
         this.camera.configureCameraListeners(this.canvas, this.gameLogic);
@@ -69,36 +77,29 @@ class Engine
     async startRenderLoop()
     {
         const gl = this.gl;
-        gl.enable(gl.DEPTH_TEST);
-        const fpsElem = document.querySelector("#fps").lastChild;
-
 
         while (true)
         {
             this.frameTiming.tick()
-            // Prepare Buffer
-            fpsElem.textContent = this.frameTiming.fps.toFixed();
 
             resizeCanvasToDisplaySize(gl.canvas, 1);
-            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            //
 
             // Calculate program independent matrices
             let projMat = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 50);
-            this.camera.Move(this.frameTiming.deltaTime);
             let viewMat = this.camera.getViewMatrix();
-            //
+
+            // Update camera position
+            this.camera.Move(this.frameTiming.deltaTime);
 
             this.sceneObjects.forEach( so => {
                 so.render(projMat, viewMat);
             });
 
-
-
-            await sleep(16);
+            await sleep(Math.max(0, 16 - this.frameTiming.deltaTime));
         }
 
     }
@@ -342,6 +343,9 @@ class Engine
 
                 let camLoc = gl.getUniformLocation(fenceProgram, "camera");
                 gl.uniformMatrix4fv(camLoc, false, viewMat);
+
+                let timeLoc = gl.getUniformLocation(fenceProgram, "u_time");
+                gl.uniform1f(timeLoc, this.frameTiming.elapsed);
 
                 this.gameLogic.fencePositions.forEach(fence => {
                     let modelMat = translate (...fence.pos, identity());
