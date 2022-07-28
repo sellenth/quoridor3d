@@ -74,6 +74,14 @@ class Engine
         this.frameTiming = new FrameTiming();
     }
 
+    handleServerPayload(payload: any)
+    {
+        if (this.gameLogic)
+        {
+            this.gameLogic.updateFences(payload)
+        }
+    }
+
     async startRenderLoop()
     {
         const gl = this.gl;
@@ -88,12 +96,12 @@ class Engine
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+            // Update camera position
+            this.camera.Move(this.frameTiming.deltaTime);
+
             // Calculate program independent matrices
             let projMat = projection(3.14 / 2, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 50);
             let viewMat = this.camera.getViewMatrix();
-
-            // Update camera position
-            this.camera.Move(this.frameTiming.deltaTime);
 
             this.sceneObjects.forEach( so => {
                 so.render(projMat, viewMat);
@@ -382,7 +390,19 @@ class Engine
 
 async function main() {
 
+    let clientSocket = new WebSocket("ws://localhost:8008", "gamerzone");
+
+    clientSocket.onopen = () => {
+        clientSocket.send("yeet");
+    }
+
+
+    //clientSocket.readyState == WebSocket.OPEN
+
     const engine = new Engine();
+    clientSocket.onmessage = (event) => {
+        engine.handleServerPayload(JSON.parse(event.data));
+    }
     engine.startRenderLoop();
 
 

@@ -28,19 +28,23 @@ export class GameLogic {
                     walls: 10
                 }
             ];
-        this.fencePositions =
-            [
+        this.fencePositions = [];
+    }
+
+    updateFences(payload: any)
+    {
+        this.fencePositions.length = 0;
+        payload.forEach((fence: any) => {
+            this.fencePositions.push(
                 {
-                    pos: [5, 1, 0],
-                    sideways: false,
-                    flat: true
-                },
-                {
-                    pos: [7, 0, 0],
-                    sideways: true,
-                    flat: false
+                    pos: [Math.ceil(fence.coord.col / 2), Math.ceil(fence.coord.layer / 2), Math.ceil(fence.coord.row / 2) ],
+                    flat: fence.orientation == 3 ? true : false,
+                    sideways: fence.orientation == 2 ? true : false
                 }
-            ];
+            )
+        })
+
+        console.log(this.fencePositions)
     }
 
     getActivePlayer()
@@ -102,12 +106,13 @@ export class GameLogic {
     toggleCursorFlat()
     {
         this.cursor.flat = !this.cursor.flat;
+        this.cursor.sideways = false;
     }
 
     toggleCursorRotate()
     {
         this.cursor.sideways = !this.cursor.sideways;
-
+        this.cursor.flat = false;
     }
 
     commitMove()
