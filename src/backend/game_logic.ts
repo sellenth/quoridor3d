@@ -10,6 +10,11 @@ type Coordinate = {
     layer: number
 }
 
+type Fence = {
+    coord: Coordinate,
+    orientation: Orientation
+}
+
 type Player = {
     name: string;
     goalY: number;
@@ -38,6 +43,7 @@ class Game
     #players: Player[];
     #currPlayer: Player | undefined;
     #nextWallNumber = 100;
+    fenceLocs: Fence[];
 
     constructor()
     {
@@ -56,6 +62,7 @@ class Game
 
         }
         this.#players = [];
+        this.fenceLocs = [];
     }
 
     getBoardSize()
@@ -208,6 +215,7 @@ class Game
             }
         });
 
+        this.fenceLocs.push({orientation: orientation, coord: coordinate});
         ++this.#nextWallNumber;
         return true;
     }
@@ -331,11 +339,11 @@ class Game
     }
 }
 
+export const game = new Game();
+
 const testing = true;
 if (testing)
 {
-    const game = new Game();
-
     assert(game.numPlayers() == 0);
     game.addPlayer({
         name: "Bob",
@@ -357,7 +365,7 @@ if (testing)
 
 
 
-  // in bounds and on proper row
+    // in bounds and on proper row
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 14, layer: 0}) == true);
     //overlapping wall
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 14, layer: 0}) == false);
@@ -376,7 +384,7 @@ if (testing)
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 4, layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 8, layer: 0}) == true);
 
-    assert(game.placeWall(Orientation.Vertical, {row: 4, col: 13, layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical, {row: 4, col: 13, layer: 2}) == true);
 
     assert(game.placeWall(Orientation.Flat, {row: 2, col: 4, layer: 1}) == true);
     game.drawBoard();
