@@ -20,5 +20,5 @@ let fss = `#version 300 es
         outColor = vec4(a, 0.1, 0., 0.8);
     }
 `;
-
 export default fss;
+//# sourceMappingURL=fs.js.map

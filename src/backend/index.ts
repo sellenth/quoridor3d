@@ -12,7 +12,7 @@ setTimeout( () => {
 const server = http.createServer( (req, res) => {
     let filePath = '' + req.url;
     if (filePath =='/')
-        filePath = '/html/gl.html'
+        filePath = '/html/index.html'
 
     const extname = path.extname(filePath);
 
@@ -27,7 +27,7 @@ const server = http.createServer( (req, res) => {
     }
 
     // TODO: prevent ../ type paths
-    readFile(path.join('../../public', filePath), (err, content) => {
+    readFile(path.join('./public', filePath), (err, content) => {
         if (err){
             readFile('./public/404.html', function(_, content) {
                 res.writeHead(404, { 'Content-Type': 'text/html' });

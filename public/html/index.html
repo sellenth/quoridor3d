@@ -1,11 +1,28 @@
+<!DOCTYPE html>
 <head>
-    <!--
-    <script src="ja.js" defer></script>
-    <link href="style.css" rel="stylesheet"></link>
-    <script src="index.js" defer></script>
-    -->
-    <script src="gl.js" />
+    <script type="module" src="../js/index.js" type="module"></script>
+    <script type="module" src="../js/vs.js" type="module"></script>
+    <script type="module" src="../js/fs.js" type="module"></script>
+    <script type="module" src="../js/utils.js" type="module"></script>
+    <script type="module" src="../js/math.js" type="module"></script>
+    <script type="module" src="../js/camera.js" type="module"></script>
+    <script type="module" src="../js/gameLogic.js" type="module"></script>
+    <link href="../css/style.css" rel="stylesheet"></link>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico"></head>
 </head>
 <body>
-    <canvas id="c"></canvas>
+    <div id="fps">fps: <span></span></div>
+    <main>
+        <div id="gameInfo">
+            <p id="turnIndicator">Player 1's turn</p>
+            <div id="wallInfo">
+                <p>Walls Remaining</p>
+                <p id="p1Walls">P1 - 4</p>
+                <p id="p2Walls">P2 - 5</p>
+            </div>
+        </div>
+        <canvas id="c" tabindex="0"></canvas>
+    </main>
+
+</div>
 </body>

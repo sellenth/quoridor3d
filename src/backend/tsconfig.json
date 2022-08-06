@@ -1,13 +1,10 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "target": "ES2016",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true,
-    "outDir": "../../public/js"
   },
-  "files": [
-    "3d.ts",
-  ]
+  "files": ["game_logic.ts"]
 }

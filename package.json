@@ -1,20 +1,20 @@
 {
-    "name": "quoridor",
-    "version": "0.0.1",
-    "description": "game",
-    "main": "index.js",
+    "name": "Quoridor3D",
+    "version": "0.1.0",
+    "description": "The beloved abstract strategy game Quoridor, now in three dimensions.",
+    "main": "src/backend/index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "build-front": "npx tsc --p ./src/frontend",
+        "run-back": "npx ts-node ./src/backend/index.ts"
     },
     "keywords": [
-        "game"
+        "game", "fun", "joy"
     ],
     "author": "HS",
     "license": "ISC",
     "devDependencies": {
         "@types/node": "^17.0.35",
         "@types/websocket": "^1.0.5",
-        "nodemon": "^2.0.16",
         "ts-node": "^10.8.0",
         "typescript": "^4.6.4"
     },
