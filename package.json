@@ -1,5 +1,5 @@
 {
-    "name": "Quoridor3D",
+    "name": "quoridor3d",
     "version": "0.1.0",
     "description": "The beloved abstract strategy game Quoridor, now in three dimensions.",
     "main": "src/backend/index.js",

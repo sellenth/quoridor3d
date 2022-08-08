@@ -1,10 +1,11 @@
 import vss from "./vs.js";
-import fss from "./fs.js";
+import { fsFence, fsPlayer } from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
 import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale } from "./math.js"
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
 import { Mat4 } from "./types.js";
+import { GameStatePayload } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -74,11 +75,12 @@ class Engine
         this.frameTiming = new FrameTiming();
     }
 
-    handleServerPayload(payload: any)
+    handleServerPayload(payload: GameStatePayload)
     {
         if (this.gameLogic)
         {
-            this.gameLogic.updateFences(payload)
+            this.gameLogic.updateFences(payload.fences)
+            this.gameLogic.updatePlayers(payload.players)
         }
     }
 
@@ -124,7 +126,7 @@ class Engine
     {
         const gl = this.gl;
         let vs = createShader(gl, gl.VERTEX_SHADER, vss);
-        let fs = createShader(gl, gl.FRAGMENT_SHADER, fss);
+        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsFence);
 
 
         let gridProgram = createProgram(gl, vs, fs);
@@ -197,7 +199,7 @@ class Engine
     {
         const gl = this.gl;
         let vs = createShader(gl, gl.VERTEX_SHADER, vss);
-        let fs = createShader(gl, gl.FRAGMENT_SHADER, fss);
+        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsPlayer);
 
         let playerProgram = createProgram(gl, vs, fs);
         let playerPosAttrib = gl.getAttribLocation(playerProgram, "a_position");
@@ -305,7 +307,7 @@ class Engine
     {
         const gl = this.gl;
         let vs = createShader(gl, gl.VERTEX_SHADER, vss);
-        let fs = createShader(gl, gl.FRAGMENT_SHADER, fss);
+        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsFence);
 
         let fenceProgram = createProgram(gl, vs, fs);
         let fencePosAttrib = gl.getAttribLocation(fenceProgram, "a_position");
@@ -387,7 +389,6 @@ class Engine
     }
 }
 
-
 async function main() {
 
     let clientSocket = new WebSocket("ws://localhost:8008", "gamerzone");
@@ -396,16 +397,11 @@ async function main() {
         clientSocket.send("yeet");
     }
 
-
-    //clientSocket.readyState == WebSocket.OPEN
-
     const engine = new Engine();
-    clientSocket.onmessage = (event) => {
-        engine.handleServerPayload(JSON.parse(event.data));
+    clientSocket.onmessage = (msg) => {
+        engine.handleServerPayload(JSON.parse(msg.data));
     }
     engine.startRenderLoop();
-
-
 }
 
 main();

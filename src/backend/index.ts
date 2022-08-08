@@ -28,6 +28,7 @@ const server = http.createServer( (req, res) => {
 
     // TODO: prevent ../ type paths
     readFile(path.join('./public', filePath), (err, content) => {
+        console.log('\t\t', filePath)
         if (err){
             readFile('./public/404.html', function(_, content) {
                 res.writeHead(404, { 'Content-Type': 'text/html' });
@@ -60,12 +61,15 @@ wsServer.on('request', (req) => {
         return;
     }
 
+
     let connection = req.accept('gamerzone', req.origin);
     console.log((new Date()) + ' Connection accepted.');
+
     connection.on('message', (message) => {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
-            connection.send(JSON.stringify(game.fenceLocs));
+
+            connection.send( JSON.stringify(game.getGameState()) );
         }
     });
 

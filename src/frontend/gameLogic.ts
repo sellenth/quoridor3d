@@ -1,5 +1,6 @@
 import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
+import { Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
 export class GameLogic {
     gridSizeXY: number = 10;
@@ -15,36 +16,36 @@ export class GameLogic {
     fencePositions: Cursor[];
 
     constructor() {
-        this.players =
-            [
-                {
-                    pos: [this.gridSizeXY / 2 - 1, this.gridLayers / 2 - 1, 0],
-                    color: [255, 0, 0],
-                    walls: 10
-                },
-                {
-                    pos: [this.gridSizeXY / 2 - 1, this.gridLayers / 2 - 1, this.gridSizeXY - 2],
-                    color: [0, 255, 0],
-                    walls: 10
-                }
-            ];
+        this.players = [];
         this.fencePositions = [];
     }
 
-    updateFences(payload: any)
+    updateFences(fences: Fence[])
     {
         this.fencePositions.length = 0;
-        payload.forEach((fence: any) => {
+        fences.forEach((fence) => {
             this.fencePositions.push(
                 {
                     pos: [Math.ceil(fence.coord.col / 2), Math.ceil(fence.coord.layer / 2), Math.ceil(fence.coord.row / 2) ],
-                    flat: fence.orientation == 3 ? true : false,
-                    sideways: fence.orientation == 2 ? true : false
+                    flat: fence.orientation == Orientation.Flat,
+                    sideways: fence.orientation == Orientation.Vertical,
                 }
             )
         })
+    }
 
-        console.log(this.fencePositions)
+    updatePlayers(players: NetworkPlayer[])
+    {
+        this.players.length = 0;
+        players.forEach((player) => {
+            this.players.push(
+                {
+                    pos: [Math.ceil(player.position.col / 2), Math.ceil(player.position.layer / 2), Math.ceil(player.position.row / 2) ],
+                    color: [player.goalY, 155, player.goalY],
+                    walls: player.numFences,
+                }
+            )
+        });
     }
 
     getActivePlayer()

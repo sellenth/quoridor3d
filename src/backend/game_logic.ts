@@ -1,37 +1,9 @@
 import { assert } from "console";
+import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate } from "../shared/types"
 
 const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
-
-type Coordinate = {
-    row: number,
-    col: number,
-    layer: number
-}
-
-type Fence = {
-    coord: Coordinate,
-    orientation: Orientation
-}
-
-type Player = {
-    name: string;
-    goalY: number;
-    numFences: number;
-    position: Coordinate;
-}
-
-type Action = {
-    coordinate: Coordinate;
-    isFence: boolean;
-}
-
-enum Orientation {
-    Horizontal = 1,
-    Vertical = 2,
-    Flat = 3
-}
 
 class Game
 {
@@ -43,7 +15,7 @@ class Game
     #players: Player[];
     #currPlayer: Player | undefined;
     #nextWallNumber = 100;
-    fenceLocs: Fence[];
+    #fences: Fence[];
 
     constructor()
     {
@@ -62,7 +34,15 @@ class Game
 
         }
         this.#players = [];
-        this.fenceLocs = [];
+        this.#fences = [];
+    }
+
+    getGameState(): GameStatePayload
+    {
+        return {
+                fences: this.#fences,
+                players: this.#players
+        }
     }
 
     getBoardSize()
@@ -215,7 +195,7 @@ class Game
             }
         });
 
-        this.fenceLocs.push({orientation: orientation, coord: coordinate});
+        this.#fences.push({orientation: orientation, coord: coordinate});
         ++this.#nextWallNumber;
         return true;
     }
