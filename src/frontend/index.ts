@@ -1,5 +1,5 @@
 import vss from "./vs.js";
-import { fsFence, fsPlayer } from "./fs.js";
+import { fsFence, fsPlayer, fsGrid } from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
 import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale } from "./math.js"
 import { Camera } from "./camera.js";
@@ -126,7 +126,7 @@ class Engine
     {
         const gl = this.gl;
         let vs = createShader(gl, gl.VERTEX_SHADER, vss);
-        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsFence);
+        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsGrid);
 
 
         let gridProgram = createProgram(gl, vs, fs);
@@ -179,6 +179,9 @@ class Engine
             render: (projMat: Mat4, viewMat: Mat4) => {
                 gl.useProgram(gridProgram);
                 gl.bindVertexArray(gridVAO);
+
+                let camPosLoc = gl.getUniformLocation(gridProgram, "camPos");
+                gl.uniform3fv(camPosLoc, this.camera.GetPosition());
 
                 let projLoc = gl.getUniformLocation(gridProgram, "projection");
                 gl.uniformMatrix4fv(projLoc, false, projMat);

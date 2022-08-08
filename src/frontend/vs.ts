@@ -6,10 +6,13 @@ let vss = `#version 300 es
     uniform mat4 model;
 
     out vec4 modelCoord;
+    out vec4 worldCoord;
     void main() 
     {
-        gl_Position = projection * camera * model * a_position;
         modelCoord = a_position;
+        worldCoord = model * a_position;
+        gl_Position = projection * camera * worldCoord;
+
     }
 `;
 

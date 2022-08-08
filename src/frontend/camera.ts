@@ -6,7 +6,7 @@ export class Camera {
     #frontVec: Vec3 = [0, 0, 1];
     #rightVec: Vec3 = [1, 0, 0];
     #upVec: Vec3    = [0, 1, 0];
-    #position: Vec3 = [5, 3, -5];
+    #position: Vec3 = [5., .3, -5.];
     #yaw = -89;
     #pitch = 0;
     #moveSpeed = 10;
@@ -28,6 +28,11 @@ export class Camera {
     SetExtents(extents: Vec3)
     {
         this.#spaceExtents = extents
+    }
+
+    GetPosition()
+    {
+        return this.#position;
     }
 
     Move(deltaTime: number)
