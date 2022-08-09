@@ -63,6 +63,8 @@ class Engine
         }
 
         this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 
         this.camera = new Camera();
         this.camera.configureCameraListeners(this.canvas, this.gameLogic);
@@ -95,7 +97,7 @@ class Engine
             resizeCanvasToDisplaySize(gl.canvas, 1);
 
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            gl.clearColor(0, 0, 0, 0);
+            gl.clearColor(0., 0., 0., 0.);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // Update camera position
@@ -117,9 +119,9 @@ class Engine
     configurePrograms()
     {
         this.sceneObjects = [];
-        this.sceneObjects.push(this.createGridProgram());
         this.sceneObjects.push(this.createPlayerProgram());
         this.sceneObjects.push(this.createFenceProgram());
+        this.sceneObjects.push(this.createGridProgram());
     }
 
     createGridProgram()
