@@ -15,9 +15,9 @@ export const fsFence = `#version 300 es
         //outColor = vec4(1, 0, 0.5, 1);
 
 
-        float a = distance(modelCoord.xy, vec2(1.)) / 1.75;
+        float a = distance(modelCoord.xy, vec2(1.)) / 1.75 + 0.5;
 
-        //a *= abs((cos(u_time * 4.) + 1.5) / 4.);
+        a *= (cos(u_time) + 1.) / 8. + .5;
         /*
         float pulseTime = 1.5;
         a *= 1. - mod(u_time, pulseTime) / pulseTime;

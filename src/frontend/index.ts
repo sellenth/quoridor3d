@@ -324,15 +324,44 @@ class Engine
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buff);
 
+        let farExtent = 1.9;
+        let nearExtent = .1;
+
         let fenceData = [
-            0, 0, 0,      255, 0, 0,
-            2, 0, 0,      255, 0, 0,
-            2, 2, 0,      255, 0, 0,
-            0, 0, 0,      255, 0, 0,
-            0, 2, 0,      255, 0, 0,
-            2, 2, 0,      255, 0, 0,
+            nearExtent, nearExtent, -.05,
+            farExtent, nearExtent, -.05,
+            farExtent, farExtent, -.05,
+            nearExtent, farExtent, -.05,
+
+            nearExtent, nearExtent, .05,
+            farExtent, nearExtent, .05,
+            farExtent, farExtent, .05,
+            nearExtent, farExtent, .05,
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fenceData), gl.STATIC_DRAW);
+
+        let elBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elBuff);
+        let elements = [
+            0, 1, 2,
+            0, 2, 3,
+
+            4, 5, 6,
+            4, 6, 7,
+
+            0, 3, 4,
+            3, 4, 7,
+
+            1, 5, 6,
+            1, 2, 6,
+
+            0, 1, 4,
+            1, 4, 5,
+
+            2, 3, 6,
+            3, 6, 7
+        ]
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);
 
         gl.enableVertexAttribArray(fencePosAttrib);
 
@@ -341,7 +370,7 @@ class Engine
                                3, // how many elements per attribute
                                gl.FLOAT, // type of individual element
                                false, //normalize
-                               6 * szFLOAT, //stride
+                               3 * szFLOAT, //stride
                                0 //offset from start of buffer
                               );
 
@@ -372,7 +401,7 @@ class Engine
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
                     gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                    gl.drawArrays(gl.TRIANGLES, 0, fenceData.length / 6);
+                    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 })
 
                 if (this.gameLogic.cursorMode == "fence")
@@ -386,7 +415,7 @@ class Engine
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
                     gl.uniformMatrix4fv(modelLoc, false, modelMat);
 
-                    gl.drawArrays(gl.TRIANGLES, 0, fenceData.length / 6);
+                    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 }
             }
         };
