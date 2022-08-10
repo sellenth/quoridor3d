@@ -5,7 +5,7 @@ export type Coordinate = {
 }
 
 export type Player = {
-    name: string;
+    id: number;
     goalY: number;
     numFences: number;
     position: Coordinate;
@@ -26,7 +26,20 @@ export type Fence = {
     coord: Coordinate,
     orientation: Orientation
 }
+
+export enum MessageType { GameState, Identity };
+
+export type ServerPayload = {
+    type: MessageType,
+    data: GameStatePayload | IdentityPayload
+}
+
 export type GameStatePayload = {
     fences: Fence[],
-    players: Player[]
+    players: Player[],
+    activePlayer: number
+}
+
+export type IdentityPayload = {
+    id: number
 }

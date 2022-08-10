@@ -6,6 +6,8 @@ export class GameLogic {
     gridSizeXY: number = 10;
     gridLayers: number = 4;
     activePlayer: number = 1;
+    id:           number = -1;
+
     cursor: Cursor = {
         pos: [1, 0, 0],
         flat: false,
@@ -18,6 +20,11 @@ export class GameLogic {
     constructor() {
         this.players = [];
         this.fencePositions = [];
+    }
+
+    assignId(id: number)
+    {
+        this.id = id;
     }
 
     updateFences(fences: Fence[])
@@ -40,6 +47,7 @@ export class GameLogic {
         players.forEach((player) => {
             this.players.push(
                 {
+                    id: player.id,
                     pos: [Math.ceil(player.position.col / 2), Math.ceil(player.position.layer / 2), Math.ceil(player.position.row / 2) ],
                     color: [player.goalY, 155, player.goalY],
                     walls: player.numFences,
@@ -51,6 +59,11 @@ export class GameLogic {
     getActivePlayer()
     {
         return this.players[this.activePlayer];
+    }
+
+    setActivePlayer(id: number)
+    {
+        this.activePlayer = id;
     }
 
     MoveCursor(v: Vec3)

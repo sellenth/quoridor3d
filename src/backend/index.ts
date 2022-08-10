@@ -4,10 +4,7 @@ import * as path from "path"
 import { game } from "./game_logic"
 
 import { server as WSServer } from "websocket"
-
-setTimeout( () => {
-    game.drawBoard();
-}, 1000 )
+import { MessageType } from "../shared/types"
 
 const server = http.createServer( (req, res) => {
     let filePath = '' + req.url;
@@ -53,6 +50,8 @@ function originIsAllowed(_: string) {
     return true;
 }
 
+let numConnections = 0;
+
 wsServer.on('request', (req) => {
     // TODO: filter origins
     if (!originIsAllowed(req.origin)) {
@@ -61,19 +60,23 @@ wsServer.on('request', (req) => {
         return;
     }
 
+    numConnections++;
 
-    let connection = req.accept('gamerzone', req.origin);
+    let gameStateConnection = req.accept('gamerzone', req.origin);
     console.log((new Date()) + ' Connection accepted.');
+    console.log("Number of connections: ", numConnections)
 
-    connection.on('message', (message) => {
+    gameStateConnection.send(JSON.stringify({ type: MessageType.GameState, data: game.getGameState() }));
+    gameStateConnection.send(JSON.stringify({ type: MessageType.Identity, data: { id: numConnections } }));
+
+    gameStateConnection.on('message', (message) => {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
-
-            connection.send( JSON.stringify(game.getGameState()) );
         }
     });
 
-    connection.on('close', (reasonCode, description) => {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+    gameStateConnection.on('close', (reasonCode, description) => {
+        numConnections--;
+        console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
     });
 });

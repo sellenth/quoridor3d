@@ -41,7 +41,8 @@ class Game
     {
         return {
                 fences: this.#fences,
-                players: this.#players
+                players: this.#players,
+                activePlayer: this.#currPlayer.id
         }
     }
 
@@ -326,7 +327,7 @@ if (testing)
 {
     assert(game.numPlayers() == 0);
     game.addPlayer({
-        name: "Bob",
+        id: 1,
         position: {row: 0,
                    col: Math.floor(game.getBoardSize() / 2),
                    layer: Math.floor(game.getBoardLayers() / 2)},
@@ -334,7 +335,7 @@ if (testing)
         goalY: game.getBoardSize() - 1
     }   );
     game.addPlayer({
-        name: "Ann",
+        id: 2,
         position: {row: game.getBoardSize() - 1,
                    col: Math.floor(game.getBoardSize() / 2),
                    layer: Math.floor(game.getBoardLayers() / 2)},
