@@ -12,8 +12,8 @@ export type Player = {
 }
 
 export type Action = {
-    coordinate: Coordinate;
-    isFence: boolean;
+    coordinate: Coordinate | undefined;
+    fence: Fence | undefined;
 }
 
 export enum Orientation {
@@ -42,4 +42,9 @@ export type GameStatePayload = {
 
 export type IdentityPayload = {
     id: number
+}
+
+export type ClientMessage = {
+    id: number,
+    action: Action,
 }

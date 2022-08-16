@@ -1,5 +1,5 @@
 import { assert } from "console";
-import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate } from "../shared/types"
+import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientMessage } from "../shared/types"
 
 const EXPLORED = 999;
 const EMPTY_FENCE = -1;
@@ -37,6 +37,16 @@ class Game
         this.#fences = [];
     }
 
+    handleClientMessage(msg: ClientMessage, callback: (payload: GameStatePayload) => void)
+    {
+        if (msg.id === this.#currPlayer.id)
+        {
+            this.processAction(msg.action);
+            callback(this.getGameState());
+        }
+        this.drawBoard();
+    }
+
     getGameState(): GameStatePayload
     {
         return {
@@ -56,14 +66,52 @@ class Game
         return this.#actualBoardLayers;
     }
 
-    processAction(action: Action)
+    processAction({coordinate, fence}: Action)
     {
+        if (coordinate)
+        {
+            if (this.isValidMove(coordinate))
+            {
+                console.log('successful player move')
+                this.#currPlayer.position = coordinate;
+                this.switchPlayer();
+            }
+        }
+        else if (fence)
+        {
+            if (this.placeWall(fence.orientation, fence.coord))
+            {
+                console.log('successful fence move')
+                this.switchPlayer();
+            }
+        }
+    }
 
+    isValidMove(_coord: Coordinate)
+    {
+        return true;
     }
 
     numPlayers()
     {
         return this.#players.length;
+    }
+
+    switchPlayer()
+    {
+        if (this.#players.length >= 2)
+        {
+            if (this.#currPlayer.id === 1)
+            {
+                this.#currPlayer = this.#players[1];
+            }
+            else if (this.#currPlayer.id === 2)
+            {
+                this.#currPlayer = this.#players[0];
+            }
+        }
+
+        return this.#currPlayer.id;
     }
 
     addPlayer(player: Player)
@@ -343,6 +391,7 @@ if (testing)
         goalY: 0
     }  );
     assert(game.numPlayers() == 2);
+    //assert(game.switchPlayer() == 1);
 
 
 

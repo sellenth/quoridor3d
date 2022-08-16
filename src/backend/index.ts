@@ -4,7 +4,7 @@ import * as path from "path"
 import { game } from "./game_logic"
 
 import { server as WSServer } from "websocket"
-import { MessageType } from "../shared/types"
+import { GameStatePayload, MessageType } from "../shared/types"
 
 const server = http.createServer( (req, res) => {
     let filePath = '' + req.url;
@@ -72,6 +72,12 @@ wsServer.on('request', (req) => {
     gameStateConnection.on('message', (message) => {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
+
+            game.handleClientMessage(JSON.parse(message.utf8Data),
+                (payload: GameStatePayload) => {
+                    gameStateConnection.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
+                }
+            );
         }
     });
 

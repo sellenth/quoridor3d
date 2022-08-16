@@ -5,7 +5,7 @@ import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
 import { Mat4 } from "./types.js";
-import { GameStatePayload, IdentityPayload, MessageType, ServerPayload } from "../shared/types.js"
+import { ClientMessage, GameStatePayload, IdentityPayload, MessageType, ServerPayload } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -50,6 +50,8 @@ class Engine
     sceneObjects: VisualUnit[];
     camera: Camera;
     frameTiming: FrameTiming;
+    gameStateSocket: WebSocket;
+
 
     constructor()
     {
@@ -75,6 +77,22 @@ class Engine
         this.configurePrograms();
 
         this.frameTiming = new FrameTiming();
+
+        this.configureWebsocket();
+
+    }
+
+    configureWebsocket()
+    {
+        this.gameStateSocket = new WebSocket("ws://localhost:8008", "gamerzone");
+
+        this.gameStateSocket.onmessage = (msg) => {
+            this.handleServerPayload(JSON.parse(msg.data));
+        }
+
+        this.gameLogic.notifyServer = (msg: ClientMessage) => {
+            this.gameStateSocket.send(JSON.stringify(msg));
+        };
     }
 
     handleServerPayload(payload: ServerPayload)
@@ -436,13 +454,8 @@ class Engine
 
 async function main() {
 
-    let gameStateSocket = new WebSocket("ws://localhost:8008", "gamerzone");
-
     const engine = new Engine();
 
-    gameStateSocket.onmessage = (msg) => {
-        engine.handleServerPayload(JSON.parse(msg.data));
-    }
     engine.startRenderLoop();
 }
 

@@ -1,6 +1,6 @@
 import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
-import { Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
+import { ClientMessage, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
 export class GameLogic {
     gridSizeXY: number = 10;
@@ -16,6 +16,8 @@ export class GameLogic {
     cursorMode = "fence";
     players: Player[];
     fencePositions: Cursor[];
+
+    notifyServer: (msg: ClientMessage) => void;
 
     constructor() {
         this.players = [];
@@ -58,7 +60,7 @@ export class GameLogic {
 
     getActivePlayer()
     {
-        return this.players[this.activePlayer];
+        return this.players[this.activePlayer - 1];
     }
 
     setActivePlayer(id: number)
@@ -105,6 +107,7 @@ export class GameLogic {
 
     switchCursorMode()
     {
+        console.log(this.cursor)
         if (this.cursorMode == "fence")
         {
             this.cursorMode = "pawn";
@@ -133,11 +136,78 @@ export class GameLogic {
     {
         if (this.cursorMode == "pawn")
         {
-            this.getActivePlayer().pos = addVec3(this.getActivePlayer().pos, this.cursor.pos);
+            let pos = this.cursor.pos;
+            pos = addVec3(pos, this.players[this.activePlayer - 1].pos);
+            this.notifyServer(
+                {
+                    id: this.getActivePlayer().id,
+                    action: {
+                        coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
+                        fence: undefined,
+                    }
+                }
+            )
         }
         if (this.cursorMode == "fence")
         {
-            this.fencePositions.push( {...this.cursor })
+            let orientation = Orientation.Horizontal;
+            if (this.cursor.flat)
+            {
+                orientation = Orientation.Flat
+            }
+            else if (this.cursor.sideways)
+            {
+                orientation = Orientation.Vertical;
+            }
+
+            let pos = this.cursor.pos;
+            if (orientation == Orientation.Horizontal)
+            {
+                this.notifyServer(
+                    {
+                        id: this.getActivePlayer().id,
+                        action: {
+                            coordinate: undefined,
+                            fence: {
+                                coord: { row: Math.max(0, pos[2] * 2 - 1), col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) },
+                                orientation: orientation
+                            }
+                        }
+                    }
+                )
+            }
+
+            else if (orientation == Orientation.Vertical)
+            {
+                this.notifyServer(
+                    {
+                        id: this.getActivePlayer().id,
+                        action: {
+                            coordinate: undefined,
+                            fence: {
+                                coord: { row: Math.max(0, pos[2] * 2), col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) },
+                                orientation: orientation
+                            }
+                        }
+                    }
+                )
+            }
+
+            else if (orientation == Orientation.Flat)
+            {
+                this.notifyServer(
+                    {
+                        id: this.getActivePlayer().id,
+                        action: {
+                            coordinate: undefined,
+                            fence: {
+                                coord: { row: Math.max(0, pos[2] * 2 - 1), col: Math.max(0, pos[0] * 2 - 1), layer: pos[1] * 2 - 1 },
+                                orientation: orientation
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
