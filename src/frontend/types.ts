@@ -1,3 +1,5 @@
+import { Orientation } from "../shared/types";
+
 export type Vec3 = [number, number, number];
 export type Vec4 = [number, number, number, number];
 
@@ -12,6 +14,5 @@ export type Player = {
 
 export type Cursor = {
     pos: Vec3,
-    flat: boolean,
-    sideways: boolean
+    orientation: Orientation
 }

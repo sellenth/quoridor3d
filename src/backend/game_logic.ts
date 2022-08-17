@@ -68,21 +68,24 @@ class Game
 
     processAction({coordinate, fence}: Action)
     {
-        if (coordinate)
+        if (this.#currPlayer)
         {
-            if (this.isValidMove(coordinate))
+            if (coordinate)
             {
-                console.log('successful player move')
-                this.#currPlayer.position = coordinate;
-                this.switchPlayer();
+                if (this.isValidMove(coordinate))
+                {
+                    console.log('successful player move')
+                    this.#currPlayer.position = coordinate;
+                    this.switchPlayer();
+                }
             }
-        }
-        else if (fence)
-        {
-            if (this.placeWall(fence.orientation, fence.coord))
+            else if (fence)
             {
-                console.log('successful fence move')
-                this.switchPlayer();
+                if (this.placeWall(fence.orientation, fence.coord))
+                {
+                    console.log('successful fence move')
+                    this.switchPlayer();
+                }
             }
         }
     }
@@ -166,19 +169,44 @@ class Game
     wallIntersects(orientation: Orientation, coordinate: Coordinate)
     {
         let intersects = false;
-        [0, 1, 2].some( (offset: number) => {
-            if ([0, 1, 2].some( (offsetPrime: number) => {
-                let row   = coordinate.row + (orientation == Orientation.Vertical ? offset : 0) + (orientation == Orientation.Flat ? offsetPrime : 0);
-                let col   = coordinate.col + (orientation == Orientation.Horizontal ? offset : 0) + (orientation == Orientation.Flat ? offsetPrime : 0);
-                let layer = coordinate.layer + (orientation != Orientation.Flat ? offsetPrime : 0);
-                if (this.#board[row][col][layer] != -1)
-                {
-                    //console.log(row, col, layer)
-                    intersects = true;
-                    return true;
-                }
-            })) { return true; }
-        });
+        if (orientation == Orientation.Flat)
+        {
+            [0, 1, 2, 3].some( (offset: number) => {
+                if ([0, 1, 2, 3].some( (offsetPrime: number) => {
+                    let row   = coordinate.row + offset;
+                    let col   = coordinate.col + offsetPrime;
+                    let layerAbove = coordinate.layer + 1;
+                    let layerBelow = coordinate.layer - 1;
+
+                    let layerAboveFail = !this.inBounds(row, col, layerAbove) || this.#board[row][col][layerAbove] == -1;
+                    let layerBelowFail = !this.inBounds(row, col, layerBelow) || this.#board[row][col][layerBelow] == -1;
+                    if (layerAboveFail && layerBelowFail)
+                    {
+                        console.log("failing 0n: ", row, " ", col, " ", coordinate.layer, " Offsets are: ", offset, " ", offsetPrime)
+                        intersects = true;
+                        return true;
+                    }
+                })) { return true; }
+            });
+
+        }
+        else
+        {
+            [0, 1, 2].some( (offset: number) => {
+                if ([0, 1, 2].some( (offsetPrime: number) => {
+                    let row   = coordinate.row + (orientation == Orientation.Vertical ? offset : 0);
+                    let col   = coordinate.col + (orientation == Orientation.Horizontal ? offset : 0);
+                    let layer = coordinate.layer;
+                    if (this.#board[row][col][layer] != -1)
+                    {
+                        console.log("failing on: ", row, " ", col, " ", layer, " Offsets are: ", offset, " ", offsetPrime)
+                        intersects = true;
+                        return true;
+                    }
+                })) { return true; }
+            });
+
+        }
 
         return intersects;
     }
@@ -394,7 +422,11 @@ if (testing)
     //assert(game.switchPlayer() == 1);
 
 
+    assert(game.placeWall(Orientation.Vertical, {row: 1, col: 1, layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical, {row: 1, col: 3, layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical, {row: 1, col: 5, layer: 0}) == true);
 
+    /*
     // in bounds and on proper row
     assert(game.placeWall(Orientation.Horizontal, {row: 1, col: 14, layer: 0}) == true);
     //overlapping wall
@@ -418,4 +450,5 @@ if (testing)
 
     assert(game.placeWall(Orientation.Flat, {row: 2, col: 4, layer: 1}) == true);
     game.drawBoard();
+    */
 }

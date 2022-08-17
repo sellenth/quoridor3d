@@ -1,6 +1,6 @@
 import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
-import { ClientMessage, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
+import { ClientMessage, Coordinate, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
 export class GameLogic {
     gridSizeXY: number = 10;
@@ -10,8 +10,7 @@ export class GameLogic {
 
     cursor: Cursor = {
         pos: [1, 0, 0],
-        flat: false,
-        sideways: false,
+        orientation: Orientation.Horizontal
     }
     cursorMode = "fence";
     players: Player[];
@@ -36,8 +35,7 @@ export class GameLogic {
             this.fencePositions.push(
                 {
                     pos: [Math.ceil(fence.coord.col / 2), Math.ceil(fence.coord.layer / 2), Math.ceil(fence.coord.row / 2) ],
-                    flat: fence.orientation == Orientation.Flat,
-                    sideways: fence.orientation == Orientation.Vertical,
+                    orientation: fence.orientation
                 }
             )
         })
@@ -120,94 +118,87 @@ export class GameLogic {
         }
     }
 
-    toggleCursorFlat()
+    nextCursorOrientation()
     {
-        this.cursor.flat = !this.cursor.flat;
-        this.cursor.sideways = false;
-    }
-
-    toggleCursorRotate()
-    {
-        this.cursor.sideways = !this.cursor.sideways;
-        this.cursor.flat = false;
+        this.cursor.orientation++;
+        if (this.cursor.orientation > Orientation.Flat)
+        {
+            this.cursor.orientation = Orientation.Horizontal;
+        }
     }
 
     commitMove()
     {
         if (this.cursorMode == "pawn")
         {
-            let pos = this.cursor.pos;
-            pos = addVec3(pos, this.players[this.activePlayer - 1].pos);
-            this.notifyServer(
-                {
-                    id: this.getActivePlayer().id,
-                    action: {
-                        coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
-                        fence: undefined,
-                    }
-                }
-            )
+            this.commitPawnMove();
         }
         if (this.cursorMode == "fence")
         {
-            let orientation = Orientation.Horizontal;
-            if (this.cursor.flat)
-            {
-                orientation = Orientation.Flat
-            }
-            else if (this.cursor.sideways)
-            {
-                orientation = Orientation.Vertical;
-            }
-
-            let pos = this.cursor.pos;
-            if (orientation == Orientation.Horizontal)
-            {
-                this.notifyServer(
-                    {
-                        id: this.getActivePlayer().id,
-                        action: {
-                            coordinate: undefined,
-                            fence: {
-                                coord: { row: Math.max(0, pos[2] * 2 - 1), col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) },
-                                orientation: orientation
-                            }
-                        }
-                    }
-                )
-            }
-
-            else if (orientation == Orientation.Vertical)
-            {
-                this.notifyServer(
-                    {
-                        id: this.getActivePlayer().id,
-                        action: {
-                            coordinate: undefined,
-                            fence: {
-                                coord: { row: Math.max(0, pos[2] * 2), col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) },
-                                orientation: orientation
-                            }
-                        }
-                    }
-                )
-            }
-
-            else if (orientation == Orientation.Flat)
-            {
-                this.notifyServer(
-                    {
-                        id: this.getActivePlayer().id,
-                        action: {
-                            coordinate: undefined,
-                            fence: {
-                                coord: { row: Math.max(0, pos[2] * 2 - 1), col: Math.max(0, pos[0] * 2 - 1), layer: pos[1] * 2 - 1 },
-                                orientation: orientation
-                            }
-                        }
-                    }
-                )
-            }
+            this.commitFenceMove();
         }
+    }
+
+    commitPawnMove()
+    {
+        let pos = this.cursor.pos;
+        pos = addVec3(pos, this.players[this.activePlayer - 1].pos);
+        this.notifyServer(
+            {
+                id: this.getActivePlayer().id,
+                action: {
+                    coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
+                    fence: undefined,
+                }
+            }
+        )
+    }
+
+
+    commitFenceMove()
+    {
+        let pos = this.cursor.pos;
+        let orientation = this.cursor.orientation;
+        this.notifyServer(
+            {
+                id: this.getActivePlayer().id,
+                action: {
+                    coordinate: undefined,
+                    fence: this.convertCursorToServerFence(pos, orientation)
+                }
+            }
+        )
+    }
+
+    convertCursorToServerFence(pos: Vec3, orientation: Orientation)
+    {
+        let c: Coordinate;
+        if (orientation == Orientation.Flat || orientation == Orientation.Vertical)
+            c = { row: Math.max(0, pos[2] * 2 - 1), col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) };
+        else
+            c = { row: Math.max(0, pos[2] * 2 - 1), col: pos[0] * 2, layer: Math.max(0, pos[1] * 2 - 1) };
+
+        /*
+        switch (orientation)
+        {
+            case Orientation.Flat:
+                c = { row: pos[2] * 2, col: pos[0] * 2, layer: pos[1] * 2 - 1 };
+                break;
+            case Orientation.Horizontal:
+                c = { row: pos[2] * 2, col: pos[0] * 2, layer: pos[1] * 2 - 1 };
+                break;
+            case Orientation.Vertical:
+                c = { row: pos[2] * 2, col: pos[0] * 2, layer: pos[1] * 2 - 1 };
+                break;
+
+        }
+        */
+
+        let serverFence = {
+            coord: c,
+            orientation: orientation
+        }
+
+        return serverFence;
     }
 }

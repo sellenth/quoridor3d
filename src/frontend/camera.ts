@@ -135,10 +135,8 @@ export class Camera {
                 gameLogic.commitMove();
             if (e.key == "c")
                 gameLogic.switchCursorMode();
-            if (e.key == "f")
-                gameLogic.toggleCursorFlat();
             if (e.key == "r")
-                gameLogic.toggleCursorRotate();
+                gameLogic.nextCursorOrientation();
         })
 
         canvas.addEventListener('keyup', e => {

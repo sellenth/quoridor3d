@@ -5,7 +5,7 @@ import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
 import { Mat4 } from "./types.js";
-import { ClientMessage, GameStatePayload, IdentityPayload, MessageType, ServerPayload } from "../shared/types.js"
+import { ClientMessage, GameStatePayload, IdentityPayload, MessageType, Orientation, ServerPayload } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -422,9 +422,9 @@ class Engine
 
                 this.gameLogic.fencePositions.forEach(fence => {
                     let modelMat = translate (...fence.pos, identity());
-                    if (fence.flat)
+                    if (fence.orientation == Orientation.Flat)
                         modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
-                    if (fence.sideways)
+                    if (fence.orientation == Orientation.Vertical)
                         modelMat = rotationXZ(Math.PI / 2, modelMat);
 
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
@@ -436,9 +436,9 @@ class Engine
                 if (this.gameLogic.cursorMode == "fence")
                 {
                     let modelMat = translate (...this.gameLogic.cursor.pos, identity());
-                    if (this.gameLogic.cursor.flat)
+                    if (this.gameLogic.cursor.orientation == Orientation.Flat)
                         modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
-                    else if (this.gameLogic.cursor.sideways)
+                    if (this.gameLogic.cursor.orientation == Orientation.Vertical)
                         modelMat = rotationXZ(Math.PI / 2, modelMat);
 
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
