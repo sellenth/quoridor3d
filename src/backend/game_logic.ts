@@ -30,14 +30,14 @@ class Game
     players: Player[];
     currPlayer: Player | undefined;
     nextWallNumber = 100;
-    fences: Fence[];
+    fenceListForClients: Fence[];
 
     constructor()
     {
         this.board = [];
         this.InitializeEmptyBoard();
         this.players = [];
-        this.fences = [];
+        this.fenceListForClients = [];
     }
 
     InitializeEmptyBoard()
@@ -69,7 +69,7 @@ class Game
     getGameState(): GameStatePayload
     {
         return {
-                fences: this.fences,
+                fences: this.fenceListForClients,
                 players: this.players,
                 activePlayer: this.currPlayer.id
         }
@@ -155,6 +155,88 @@ class Game
             && layerIdx >= 0 && layerIdx < this.actualBoardLayers;
     }
 
+
+    UpdateBoardWithNewWall(orientation: Orientation, coord: Coordinate)
+    {
+        [0, 1, 2].forEach( (offset: number) => {
+            [0, 1, 2].forEach( (offsetPrime) => {
+                let row = coord.row;
+                let col = coord.col;
+                let layer = coord.layer;
+                switch (orientation)
+                {
+                    case Orientation.Vertical:
+                        row += offset;
+                        layer += offsetPrime;
+                        break;
+                    case Orientation.Horizontal:
+                        col += offset;
+                        layer += offsetPrime;
+                        break;
+                    case Orientation.Flat:
+                        row += offset;
+                        col += offsetPrime;
+                        break;
+
+                }
+                if (this.inBounds(row, col, layer))
+                {
+                    this.board[row][col][layer] = this.nextWallNumber
+                }
+            });
+        });
+    }
+
+    placeWall(orientation: Orientation, coord: Coordinate): boolean
+    {
+        if (this.InvalidWallPosition(orientation, coord)) return false;
+
+        this.UpdateBoardWithNewWall(orientation, coord);
+
+        this.fenceListForClients.push({orientation: orientation, coord: coord});
+        ++this.nextWallNumber;
+        return true;
+    }
+
+    InvalidWallPosition(orientation: Orientation, coord: Coordinate)
+    {
+        let {row: row, col: col, layer: lay} = coord
+
+        return !this.inBounds(row, col, lay)
+            || orientation == Orientation.Vertical   && !this.ValidOriginForVerticalWall(coord)
+            || orientation == Orientation.Horizontal && !this.ValidOriginForHorizontalWall(coord)
+            || orientation == Orientation.Flat       && !this.ValidOriginForFlatWall(coord)
+            || this.wallIntersects(orientation, coord)
+            || !this.pathExistsAfterWall(orientation, coord);
+    }
+
+    ValidOriginForVerticalWall(coord: Coordinate)
+    {
+        return coord.row.IsEven() 
+            && coord.col.IsOdd() 
+            && coord.layer.IsEven() 
+            && coord.row <= this.actualBoardSize - 3
+            && coord.layer <= this.actualBoardLayers - 3;
+    }
+
+    ValidOriginForHorizontalWall(coord: Coordinate)
+    {
+        return coord.row.IsOdd()
+            && coord.col.IsEven()
+            && coord.layer.IsEven()
+            && coord.col <= this.actualBoardSize - 3
+            && coord.layer <= this.actualBoardLayers - 3;
+    }
+
+    ValidOriginForFlatWall(coord: Coordinate)
+    {
+        return coord.layer.IsOdd()
+            && coord.row.IsEven()
+            && coord.col.IsEven()
+            && coord.col <= this.actualBoardSize - 3
+            && coord.row <= this.actualBoardSize - 3;
+    }
+
     wallIntersects(orientation: Orientation, coordinate: Coordinate)
     {
         let intersects = false;
@@ -198,67 +280,6 @@ class Game
         }
 
         return intersects;
-    }
-
-    placeWall(orientation: Orientation, coord: Coordinate): boolean
-    {
-        let {col: col, row: row, layer: lay} = coord
-        if (!this.inBounds(row, col, lay)
-            || orientation == Orientation.Vertical   && (row.IsOdd() || col.IsEven() || lay.IsOdd())
-            || orientation == Orientation.Horizontal && !(row % 2) && (col % 2) && (lay% 2)
-            || orientation == Orientation.Flat       && !(lay% 2) && (row % 2) && (col % 2)
-            || orientation == Orientation.Horizontal && (col > this.actualBoardSize - 3
-                                                        || lay> this.actualBoardLayers - 3)
-            || orientation == Orientation.Vertical   && (row > this.actualBoardSize - 3
-                                                        || lay> this.actualBoardLayers - 3)
-            || orientation == Orientation.Flat       && (col > this.actualBoardSize - 3
-                                                         || row > this.actualBoardSize - 3)
-            || this.wallIntersects(orientation, coord)
-            || !this.pathExistsAfterWall(orientation, coord))
-            return false;
-
-
-        [0, 1, 2, 3].forEach( (offset: number) => {
-            [0, 1, 2, 3].forEach( (offsetPrime) => {
-                if (orientation == Orientation.Vertical)
-                {
-                        let row = coord.row + Math.min(2, offset);
-                        let col = coord.col;
-                        let layer = coord.layer + offsetPrime
-
-                        if (this.inBounds(row, col, layer))
-                        {
-                            this.board[row][col][layer] = this.nextWallNumber
-                        }
-                }
-                else if (orientation == Orientation.Horizontal)
-                {
-                        let row = coord.row;
-                        let col = coord.col + Math.min(offset, 2);
-                        let layer = coord.layer + offsetPrime
-
-                        if (this.inBounds(row, col, layer))
-                        {
-                            this.board[row][col][layer] = this.nextWallNumber
-                        }
-                }
-                else if (orientation == Orientation.Flat)
-                {
-                        let row = coord.row + Math.max(1, offset)
-                        let col = coord.col + Math.max(1, offsetPrime)
-                        let layer = coord.layer;
-
-                        if (this.inBounds(row, col, layer))
-                        {
-                            this.board[row][col][layer] = this.nextWallNumber
-                        }
-                }
-            });
-        });
-
-        this.fences.push({orientation: orientation, coord: coord});
-        ++this.nextWallNumber;
-        return true;
     }
 
     pathExistsAfterWall(orientation: Orientation, coordinate: Coordinate)
@@ -402,7 +423,7 @@ if (testing)
     assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 3,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 5,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 11, col: 2,  layer: 0}) == true);
-    assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 1,  layer: 3}) == true);
+    assert(game.placeWall(Orientation.Flat,         {row: 8,  col: 2,  layer: 3}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 7,  col: 2,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 9,  col: 2,  layer: 0}) == false);
 
@@ -413,7 +434,7 @@ if (testing)
     assert(game.placeWall(Orientation.Vertical,     {row: 6,  col: 5,  layer: 0}) == false);
     assert(game.placeWall(Orientation.Vertical,     {row: 4,  col: 5,  layer: 0}) == true);
 
-    assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 5,  layer: 1}) == true);
+//    assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 5,  layer: 3}) == true);
     game.drawBoard();
     /*
     // in bounds and on proper row
