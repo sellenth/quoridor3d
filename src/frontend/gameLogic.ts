@@ -176,13 +176,13 @@ export class GameLogic {
         switch (orientation)
         {
             case Orientation.Flat:
-                c = { row: pos[2] * 2, col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) };
+                c = { layer: Math.max(0, pos[1] * 2 - 1), row: pos[2] * 2, col: pos[0] * 2 };
                 break;
             case Orientation.Horizontal:
-                c = { row: Math.max(0, pos[2] * 2 - 1), col: pos[0] * 2, layer: Math.max(0, pos[1] * 2 - 1) };
+                c = { row: Math.max(0, pos[2] * 2 - 1), col: pos[0] * 2, layer: pos[1] * 2 };
                 break;
             case Orientation.Vertical:
-                c = { row: pos[2] * 2, col: Math.max(0, pos[0] * 2 - 1), layer: Math.max(0, pos[1] * 2 - 1) };
+                c = { col: Math.max(0, pos[0] * 2 - 1), row: pos[2] * 2, layer: pos[1] * 2 };
                 break;
 
         }

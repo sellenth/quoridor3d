@@ -436,6 +436,7 @@ class Engine
                 if (this.gameLogic.cursorMode == "fence")
                 {
                     let modelMat = translate (...this.gameLogic.cursor.pos, identity());
+                    modelMat = scale (1.01, 1.01, 1.01, modelMat); // prevent z fighting
                     if (this.gameLogic.cursor.orientation == Orientation.Flat)
                         modelMat = rotationYZ(3 * Math.PI / 2, modelMat);
                     if (this.gameLogic.cursor.orientation == Orientation.Vertical)

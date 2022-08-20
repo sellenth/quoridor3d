@@ -58,7 +58,7 @@ class Game
 
     handleClientMessage(msg: ClientMessage, callback: (payload: GameStatePayload) => void)
     {
-        if (msg.id === this.currPlayer.id)
+        if (this.currPlayer && this.currPlayer.id == msg.id)
         {
             this.processAction(msg.action);
             callback(this.getGameState());
@@ -87,24 +87,22 @@ class Game
 
     processAction({coordinate, fence}: Action)
     {
-        if (this.currPlayer)
+        assert (!!this.currPlayer);
+        if (coordinate)
         {
-            if (coordinate)
+            if (this.isValidMove(coordinate))
             {
-                if (this.isValidMove(coordinate))
-                {
-                    console.log('successful player move')
-                    this.currPlayer.position = coordinate;
-                    this.switchPlayer();
-                }
+                console.log('successful player move')
+                this.currPlayer.position = coordinate;
+                this.switchPlayer();
             }
-            else if (fence)
+        }
+        else if (fence)
+        {
+            if (this.placeWall(fence.orientation, fence.coord))
             {
-                if (this.placeWall(fence.orientation, fence.coord))
-                {
-                    console.log('successful fence move')
-                    this.switchPlayer();
-                }
+                console.log('successful fence move')
+                this.switchPlayer();
             }
         }
     }
@@ -148,13 +146,28 @@ class Game
         }
     }
 
-    inBounds(rIdx: number, cIdx: number, layerIdx: number)
+    placeWall(orientation: Orientation, coord: Coordinate): boolean
     {
-        return rIdx >= 0 && rIdx < this.actualBoardSize
-            && cIdx >= 0 && cIdx < this.actualBoardSize
-            && layerIdx >= 0 && layerIdx < this.actualBoardLayers;
+        if (this.InvalidWallPosition(orientation, coord)) return false;
+
+        this.UpdateBoardWithNewWall(orientation, coord);
+
+        this.fenceListForClients.push({orientation: orientation, coord: coord});
+        ++this.nextWallNumber;
+        return true;
     }
 
+    InvalidWallPosition(orientation: Orientation, coord: Coordinate)
+    {
+        let {row: row, col: col, layer: lay} = coord
+
+        return !this.inBounds(row, col, lay)
+            || orientation == Orientation.Vertical   && !this.ValidOriginForVerticalWall(coord)
+            || orientation == Orientation.Horizontal && !this.ValidOriginForHorizontalWall(coord)
+            || orientation == Orientation.Flat       && !this.ValidOriginForFlatWall(coord)
+            || this.wallIntersects(orientation, coord)
+            || !this.pathExistsAfterWall(orientation, coord);
+    }
 
     UpdateBoardWithNewWall(orientation: Orientation, coord: Coordinate)
     {
@@ -187,28 +200,13 @@ class Game
         });
     }
 
-    placeWall(orientation: Orientation, coord: Coordinate): boolean
+    inBounds(rIdx: number, cIdx: number, layerIdx: number)
     {
-        if (this.InvalidWallPosition(orientation, coord)) return false;
-
-        this.UpdateBoardWithNewWall(orientation, coord);
-
-        this.fenceListForClients.push({orientation: orientation, coord: coord});
-        ++this.nextWallNumber;
-        return true;
+        return rIdx >= 0 && rIdx < this.actualBoardSize
+            && cIdx >= 0 && cIdx < this.actualBoardSize
+            && layerIdx >= 0 && layerIdx < this.actualBoardLayers;
     }
 
-    InvalidWallPosition(orientation: Orientation, coord: Coordinate)
-    {
-        let {row: row, col: col, layer: lay} = coord
-
-        return !this.inBounds(row, col, lay)
-            || orientation == Orientation.Vertical   && !this.ValidOriginForVerticalWall(coord)
-            || orientation == Orientation.Horizontal && !this.ValidOriginForHorizontalWall(coord)
-            || orientation == Orientation.Flat       && !this.ValidOriginForFlatWall(coord)
-            || this.wallIntersects(orientation, coord)
-            || !this.pathExistsAfterWall(orientation, coord);
-    }
 
     ValidOriginForVerticalWall(coord: Coordinate)
     {
@@ -237,21 +235,23 @@ class Game
             && coord.row <= this.actualBoardSize - 3;
     }
 
+
     wallIntersects(orientation: Orientation, coordinate: Coordinate)
     {
         let intersects = false;
         if (orientation == Orientation.Flat)
         {
-            [1, 2, 3].some( (offset: number) => {
-                if ([1, 2, 3].some( (offsetPrime: number) => {
+            [0, 1, 2].some( (offset: number) => {
+                if ([0, 1, 2].some( (offsetPrime: number) => {
                     let row   = coordinate.row + offset;
                     let col   = coordinate.col + offsetPrime;
                     let layerAbove = coordinate.layer + 1;
                     let layerBelow = coordinate.layer - 1;
 
+                    let layerCurrFail  = this.board[row][col][coordinate.layer] != EMPTY_FENCE;
                     let layerAboveFail = !this.inBounds(row, col, layerAbove) || this.board[row][col][layerAbove] > EMPTY_CELL;
                     let layerBelowFail = !this.inBounds(row, col, layerBelow) || this.board[row][col][layerBelow] > EMPTY_CELL;
-                    if (layerAboveFail && layerBelowFail)
+                    if (layerCurrFail || layerAboveFail && layerBelowFail)
                     {
                         console.log("failing 0n: ", row, " ", col, " ", coordinate.layer, " Offsets are: ", offset, " ", offsetPrime)
                         intersects = true;
@@ -394,36 +394,18 @@ class Game
 
 export const game = new Game();
 
+
 const testing = true;
 if (testing)
 {
-    assert(game.numPlayers() == 0);
-    game.addPlayer({
-        id: 1,
-        position: {row: 0,
-                   col: Math.floor(game.getBoardSize() / 2),
-                   layer: Math.floor(game.getBoardLayers() / 2)},
-        numFences: 10,
-        goalY: game.getBoardSize() - 1
-    }   );
-    game.addPlayer({
-        id: 2,
-        position: {row: game.getBoardSize() - 1,
-                   col: Math.floor(game.getBoardSize() / 2),
-                   layer: Math.floor(game.getBoardLayers() / 2)},
-        numFences: 10,
-        goalY: 0
-    }  );
-    assert(game.numPlayers() == 2);
-    //assert(game.switchPlayer() == 1);
-
+    TestAddingPlayers();
     TestOddEven();
 
     assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 1,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 3,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 5,  layer: 0}) == true);
-    assert(game.placeWall(Orientation.Horizontal,   {row: 11, col: 2,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Flat,         {row: 8,  col: 2,  layer: 3}) == true);
+    assert(game.placeWall(Orientation.Horizontal,   {row: 11, col: 2,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 7,  col: 2,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 9,  col: 2,  layer: 0}) == false);
 
@@ -433,6 +415,9 @@ if (testing)
     assert(game.placeWall(Orientation.Vertical,     {row: 5,  col: 5,  layer: 0}) == false);
     assert(game.placeWall(Orientation.Vertical,     {row: 6,  col: 5,  layer: 0}) == false);
     assert(game.placeWall(Orientation.Vertical,     {row: 4,  col: 5,  layer: 0}) == true);
+
+    assert(game.placeWall(Orientation.Flat,         {row: 0,  col: 14,  layer: 1}) == true);
+    assert(game.placeWall(Orientation.Flat,         {row: 2,  col: 14,  layer: 1}) == false);
 
 //    assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 5,  layer: 3}) == true);
     game.drawBoard();
@@ -463,14 +448,39 @@ if (testing)
     */
 }
 
-function Test(title: string, res: boolean, expected: boolean )
+function TestAddingPlayers()
 {
-    console.log(title, ": ", res === expected ? "PASSED" : "FAILED")
+    Test("No players upon just starting game", game.numPlayers() == 0);
+
+    game.addPlayer({
+        id: 1,
+        position: {row: 0,
+                   col: Math.floor(game.getBoardSize() / 2),
+                   layer: Math.floor(game.getBoardLayers() / 2)},
+        numFences: 10,
+        goalY: game.getBoardSize() - 1
+    }   );
+    game.addPlayer({
+        id: 2,
+        position: {row: game.getBoardSize() - 1,
+                   col: Math.floor(game.getBoardSize() / 2),
+                   layer: Math.floor(game.getBoardLayers() / 2)},
+        numFences: 10,
+        goalY: 0
+    }  );
+
+    Test("Adding two players", game.numPlayers() == 2);
+    //assert(game.switchPlayer() == 1);
 }
 
 function TestOddEven()
 {
     let x = 5;
-    Test("Odd number is odd", x.IsOdd(), true);
-    Test("Odd number is not even", x.IsEven(), false);
+    Test("Odd number is odd", x.IsOdd() == true);
+    Test("Odd number is not even", x.IsEven() == false);
+}
+
+function Test(title: string, res: boolean )
+{
+    console.log(title, ": ", res ? "PASSED" : "FAILED")
 }
