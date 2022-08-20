@@ -5,6 +5,21 @@ const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
 
+declare global {
+    interface Number {
+          IsEven: () => boolean;
+          IsOdd: () => boolean;
+    }
+}
+
+Number.prototype.IsOdd = function() : boolean {
+  return (this % 2) >= 1;
+}
+
+Number.prototype.IsEven = function() : boolean {
+  return !this.IsOdd();
+}
+
 class Game
 {
     logicalBoardSize = 9;
@@ -20,6 +35,13 @@ class Game
     constructor()
     {
         this.board = [];
+        this.InitializeEmptyBoard();
+        this.players = [];
+        this.fences = [];
+    }
+
+    InitializeEmptyBoard()
+    {
         for(let i = 0; i < this.actualBoardSize; ++i)
         {
             this.board.push([]);
@@ -31,10 +53,7 @@ class Game
                     this.board[i][j].push(i % 2 || j % 2 || k % 2 ? EMPTY_FENCE : EMPTY_CELL);
                 }
             }
-
         }
-        this.players = [];
-        this.fences = [];
     }
 
     handleClientMessage(msg: ClientMessage, callback: (payload: GameStatePayload) => void)
@@ -136,36 +155,6 @@ class Game
             && layerIdx >= 0 && layerIdx < this.actualBoardLayers;
     }
 
-    // TODO ew
-    findPairOrientation(cell: number, rIdx: number, cIdx: number, layerIdx: number)
-    {
-        if (this.inBounds(rIdx + 1, cIdx + 1, layerIdx) && this.board[rIdx + 1][cIdx + 1][layerIdx] == cell)
-            return Orientation.Flat;
-        if (this.inBounds(rIdx - 1, cIdx - 1, layerIdx) && this.board[rIdx - 1][cIdx - 1][layerIdx] == cell)
-            return Orientation.Flat;
-        if (this.inBounds(rIdx + 1, cIdx, layerIdx) && this.board[rIdx + 1][cIdx][layerIdx] == cell)
-            return Orientation.Vertical;
-        if (this.inBounds(rIdx - 1, cIdx, layerIdx) && this.board[rIdx - 1][cIdx][layerIdx] == cell)
-            return Orientation.Vertical;
-        if (this.inBounds(rIdx, cIdx + 1, layerIdx) && this.board[rIdx][cIdx + 1][layerIdx] == cell)
-            return Orientation.Horizontal;
-        if (this.inBounds(rIdx, cIdx - 1, layerIdx) && this.board[rIdx][cIdx - 1][layerIdx] == cell)
-            return Orientation.Horizontal;
-
-        if (this.inBounds(rIdx + 2, cIdx + 2, layerIdx) && this.board[rIdx + 2][cIdx + 2][layerIdx] == cell)
-            return Orientation.Flat;
-        if (this.inBounds(rIdx - 2, cIdx - 2, layerIdx) && this.board[rIdx - 2][cIdx - 2][layerIdx] == cell)
-            return Orientation.Flat;
-        if (this.inBounds(rIdx + 2, cIdx, layerIdx) && this.board[rIdx + 2][cIdx][layerIdx] == cell)
-            return Orientation.Vertical;
-        if (this.inBounds(rIdx - 2, cIdx, layerIdx) && this.board[rIdx - 2][cIdx][layerIdx] == cell)
-            return Orientation.Vertical;
-        if (this.inBounds(rIdx, cIdx + 2, layerIdx) && this.board[rIdx][cIdx + 2][layerIdx] == cell)
-            return Orientation.Horizontal;
-        if (this.inBounds(rIdx, cIdx - 2, layerIdx) && this.board[rIdx][cIdx - 2][layerIdx] == cell)
-            return Orientation.Horizontal;
-    }
-
     wallIntersects(orientation: Orientation, coordinate: Coordinate)
     {
         let intersects = false;
@@ -211,68 +200,63 @@ class Game
         return intersects;
     }
 
-    placeWall(orientation: Orientation, coordinate: Coordinate): boolean
+    placeWall(orientation: Orientation, coord: Coordinate): boolean
     {
-        if (!this.inBounds(coordinate.row, coordinate.col, coordinate.layer)
-            || orientation == Orientation.Vertical   && !(coordinate.col % 2) && (coordinate.row % 2) && (coordinate.layer % 2)
-            || orientation == Orientation.Horizontal && !(coordinate.row % 2) && (coordinate.col % 2) && (coordinate.layer % 2)
-            || orientation == Orientation.Flat       && !(coordinate.layer % 2) && (coordinate.row % 2) && (coordinate.col % 2)
-            || orientation == Orientation.Horizontal && (coordinate.col > this.actualBoardSize - 3
-                                                        || coordinate.layer > this.actualBoardLayers - 3)
-            || orientation == Orientation.Vertical   && (coordinate.row > this.actualBoardSize - 3
-                                                        || coordinate.layer > this.actualBoardLayers - 3)
-            || orientation == Orientation.Flat       && (coordinate.col > this.actualBoardSize - 3
-                                                         || coordinate.row > this.actualBoardSize - 3)
-            || this.wallIntersects(orientation, coordinate)
-            || !this.pathExistsAfterWall(orientation, coordinate))
+        let {col: col, row: row, layer: lay} = coord
+        if (!this.inBounds(row, col, lay)
+            || orientation == Orientation.Vertical   && (row.IsOdd() || col.IsEven() || lay.IsOdd())
+            || orientation == Orientation.Horizontal && !(row % 2) && (col % 2) && (lay% 2)
+            || orientation == Orientation.Flat       && !(lay% 2) && (row % 2) && (col % 2)
+            || orientation == Orientation.Horizontal && (col > this.actualBoardSize - 3
+                                                        || lay> this.actualBoardLayers - 3)
+            || orientation == Orientation.Vertical   && (row > this.actualBoardSize - 3
+                                                        || lay> this.actualBoardLayers - 3)
+            || orientation == Orientation.Flat       && (col > this.actualBoardSize - 3
+                                                         || row > this.actualBoardSize - 3)
+            || this.wallIntersects(orientation, coord)
+            || !this.pathExistsAfterWall(orientation, coord))
             return false;
 
+
         [0, 1, 2, 3].forEach( (offset: number) => {
-            if (orientation == Orientation.Vertical)
-            {
-                [0, 1, 2, 3].forEach( (offsetPrime) => {
-                    let row = coordinate.row + Math.max(1, offset);
-                    let col = coordinate.col;
-                    let layer = coordinate.layer + offsetPrime
+            [0, 1, 2, 3].forEach( (offsetPrime) => {
+                if (orientation == Orientation.Vertical)
+                {
+                        let row = coord.row + Math.min(2, offset);
+                        let col = coord.col;
+                        let layer = coord.layer + offsetPrime
 
-                    if (this.inBounds(row, col, layer))
-                    {
-                        this.board[row][col][layer] = this.nextWallNumber
-                    }
+                        if (this.inBounds(row, col, layer))
+                        {
+                            this.board[row][col][layer] = this.nextWallNumber
+                        }
+                }
+                else if (orientation == Orientation.Horizontal)
+                {
+                        let row = coord.row;
+                        let col = coord.col + Math.min(offset, 2);
+                        let layer = coord.layer + offsetPrime
 
-                } )
-            }
-            else if (orientation == Orientation.Horizontal)
-            {
-                [0, 1, 2, 3].forEach( (offsetPrime) => {
-                    let row = coordinate.row;
-                    let col = coordinate.col + Math.min(offset, 2);
-                    let layer = coordinate.layer + offsetPrime
+                        if (this.inBounds(row, col, layer))
+                        {
+                            this.board[row][col][layer] = this.nextWallNumber
+                        }
+                }
+                else if (orientation == Orientation.Flat)
+                {
+                        let row = coord.row + Math.max(1, offset)
+                        let col = coord.col + Math.max(1, offsetPrime)
+                        let layer = coord.layer;
 
-                    if (this.inBounds(row, col, layer))
-                    {
-                        this.board[row][col][layer] = this.nextWallNumber
-                    }
-
-                } )
-            }
-            else if (orientation == Orientation.Flat)
-            {
-                [0, 1, 2, 3].forEach( (offsetPrime) => {
-                    let row = coordinate.row + Math.max(1, offset)
-                    let col = coordinate.col + Math.max(1, offsetPrime)
-                    let layer = coordinate.layer;
-
-                    if (this.inBounds(row, col, layer))
-                    {
-                        this.board[row][col][layer] = this.nextWallNumber
-                    }
-
-                } )
-            }
+                        if (this.inBounds(row, col, layer))
+                        {
+                            this.board[row][col][layer] = this.nextWallNumber
+                        }
+                }
+            });
         });
 
-        this.fences.push({orientation: orientation, coord: coordinate});
+        this.fences.push({orientation: orientation, coord: coord});
         ++this.nextWallNumber;
         return true;
     }
@@ -371,16 +355,7 @@ class Game
                     }
                     else if (cell != -1)
                     {
-                        let outputChar = '?';
-
-                        switch (this.findPairOrientation(cell, i, j, k))
-                        {
-                            case Orientation.Horizontal: outputChar = '-'; break;
-                            case Orientation.Vertical:   outputChar = '|'; break;
-                            case Orientation.Flat:       outputChar = '█'; break;
-                        }
-
-                        process.stdout.write(outputChar);
+                        process.stdout.write( 'W' );
                     }
                     else
                     {
@@ -421,10 +396,11 @@ if (testing)
     assert(game.numPlayers() == 2);
     //assert(game.switchPlayer() == 1);
 
+    TestOddEven();
 
-    assert(game.placeWall(Orientation.Vertical,     {row: 7,  col: 1,  layer: 0}) == true);
-    assert(game.placeWall(Orientation.Vertical,     {row: 7,  col: 3,  layer: 0}) == true);
-    assert(game.placeWall(Orientation.Vertical,     {row: 7,  col: 5,  layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 1,  layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 3,  layer: 0}) == true);
+    assert(game.placeWall(Orientation.Vertical,     {row: 8,  col: 5,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 11, col: 2,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 1,  layer: 3}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 7,  col: 2,  layer: 0}) == true);
@@ -433,7 +409,9 @@ if (testing)
 
     assert(game.placeWall(Orientation.Horizontal,   {row: 5,  col: 0,  layer: 0}) == true);
     assert(game.placeWall(Orientation.Horizontal,   {row: 5,  col: 2,  layer: 0}) == false);
-    //assert(game.placeWall(Orientation.Vertical,     {row: 5,  col: 5,  layer: 0}) == false);
+    assert(game.placeWall(Orientation.Vertical,     {row: 5,  col: 5,  layer: 0}) == false);
+    assert(game.placeWall(Orientation.Vertical,     {row: 6,  col: 5,  layer: 0}) == false);
+    assert(game.placeWall(Orientation.Vertical,     {row: 4,  col: 5,  layer: 0}) == true);
 
     assert(game.placeWall(Orientation.Flat,         {row: 7,  col: 5,  layer: 1}) == true);
     game.drawBoard();
@@ -462,4 +440,16 @@ if (testing)
     assert(game.placeWall(Orientation.Flat, {row: 2, col: 4, layer: 1}) == true);
     game.drawBoard();
     */
+}
+
+function Test(title: string, res: boolean, expected: boolean )
+{
+    console.log(title, ": ", res === expected ? "PASSED" : "FAILED")
+}
+
+function TestOddEven()
+{
+    let x = 5;
+    Test("Odd number is odd", x.IsOdd(), true);
+    Test("Odd number is not even", x.IsEven(), false);
 }
