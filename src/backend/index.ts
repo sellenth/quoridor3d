@@ -5,6 +5,7 @@ import { game } from "./game_logic"
 
 import { connection, server as WSServer } from "websocket"
 import { GameStatePayload, MessageType } from "../shared/types"
+import { randomUUID } from "crypto"
 
 const server = http.createServer( (req, res) => {
     let filePath = '' + req.url;
@@ -52,12 +53,17 @@ function originIsAllowed(_: string) {
 
 let numConnections = 0;
 
-let clients = new Map<number, connection>();
+type ClientInfo = {
+    socket: connection,
+    placement: number
+}
+
+let clients = new Map<string, ClientInfo>();
 
 function UpdateAllClients(payload: GameStatePayload)
 {
     clients.forEach((connection) => {
-        connection.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
+        connection.socket.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
     })
 }
 
@@ -69,10 +75,12 @@ wsServer.on('request', (req) => {
         return;
     }
 
+    let connectionUUID = randomUUID();
 
     let gameStateConnection = req.accept('gamerzone', req.origin);
     numConnections++;
-    clients.set(numConnections, gameStateConnection);
+
+    clients.set(connectionUUID, {socket: gameStateConnection, placement: numConnections});
 
     console.log((new Date()) + ' Connection accepted.');
     console.log("Number of connections: ", numConnections)
@@ -93,7 +101,22 @@ wsServer.on('request', (req) => {
     });
 
     gameStateConnection.on('close', (reasonCode, description) => {
+        clients.delete(connectionUUID);
         numConnections--;
+        RefreshAllClientPlacements();
         console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
     });
 });
+
+function RefreshAllClientPlacements()
+{
+    clients.forEach((connection) => {
+        if (connection.placement > numConnections)
+        {
+            console.log("Telling player %d that they have a new identity", connection.placement);
+            connection.placement--;
+            connection.socket.send(JSON.stringify({ type: MessageType.Identity, data: { id: connection.placement } }));
+        }
+    })
+
+}
