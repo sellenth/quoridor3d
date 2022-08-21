@@ -157,7 +157,7 @@ export class Camera {
         })
 
         canvas.addEventListener('mousemove', e => {
-            if (document.pointerLockElement === canvas) {
+            if (document.pointerLockElement == canvas) {
                 if (this.firstLook) {
                     this.firstLook = false;
                     this.Look(0, 0);

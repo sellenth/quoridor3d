@@ -78,18 +78,21 @@ wsServer.on('request', (req) => {
     let connectionUUID = randomUUID();
 
     let gameStateConnection = req.accept('gamerzone', req.origin);
+    let pid = numConnections;
     numConnections++;
 
-    clients.set(connectionUUID, {socket: gameStateConnection, placement: numConnections});
+    clients.set(connectionUUID, {socket: gameStateConnection, placement: pid});
+    game.CreatePlayer(pid);
 
     console.log((new Date()) + ' Connection accepted.');
     console.log("Number of connections: ", numConnections)
+    console.log("It is player %d's turn", game.currPlayer?.id)
 
-    gameStateConnection.send(JSON.stringify({ type: MessageType.GameState, data: game.getGameState() }));
-    gameStateConnection.send(JSON.stringify({ type: MessageType.Identity, data: { id: numConnections } }));
+    UpdateAllClients(game.getGameState());
+    gameStateConnection.send(JSON.stringify({ type: MessageType.Identity, data: { id: pid } }));
 
     gameStateConnection.on('message', (message) => {
-        if (message.type === 'utf8') {
+        if (message.type == 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
 
             game.handleClientMessage(JSON.parse(message.utf8Data),
@@ -101,9 +104,11 @@ wsServer.on('request', (req) => {
     });
 
     gameStateConnection.on('close', (reasonCode, description) => {
+        game.RemovePlayer(clients.get(connectionUUID)?.placement);
         clients.delete(connectionUUID);
         numConnections--;
         RefreshAllClientPlacements();
+        UpdateAllClients(game.getGameState());
         console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
     });
 });

@@ -38,6 +38,7 @@ class Game
         this.InitializeEmptyBoard();
         this.players = [];
         this.fenceListForClients = [];
+        console.log("Game has been successfully initialized...");
     }
 
     InitializeEmptyBoard()
@@ -121,17 +122,51 @@ class Game
     {
         if (this.players.length >= 2)
         {
-            if (this.currPlayer.id === 1)
+            if (this.currPlayer.id == 0)
             {
                 this.currPlayer = this.players[1];
             }
-            else if (this.currPlayer.id === 2)
+            else if (this.currPlayer.id == 1)
             {
                 this.currPlayer = this.players[0];
             }
         }
 
         return this.currPlayer.id;
+    }
+
+    CreatePlayer(id: number)
+    {
+        if (this.players.length == 0)
+        {
+            game.addPlayer({
+                id: id,
+                position: {row: 0,
+                        col: Math.floor(game.getBoardSize() / 2),
+                        layer: Math.floor(game.getBoardLayers() / 2)},
+                numFences: 10,
+                goalY: game.getBoardSize() - 1
+            }   );
+        }
+        else if (this.players.length == 1)
+        {
+            game.addPlayer({
+                id: id,
+                position: {row: game.getBoardSize() - 1,
+                        col: Math.floor(game.getBoardSize() / 2),
+                        layer: Math.floor(game.getBoardLayers() / 2)},
+                numFences: 10,
+                goalY: 0
+            }  );
+        }
+    }
+
+    RemovePlayer(id: number | undefined )
+    {
+        if (id != undefined)
+        {
+            this.players.splice(id, 1);
+        }
     }
 
     addPlayer(player: Player)
@@ -394,8 +429,7 @@ class Game
 
 export const game = new Game();
 
-
-const testing = true;
+const testing = false;
 if (testing)
 {
     TestAddingPlayers();
@@ -453,7 +487,7 @@ function TestAddingPlayers()
     Test("No players upon just starting game", game.numPlayers() == 0);
 
     game.addPlayer({
-        id: 1,
+        id: 0,
         position: {row: 0,
                    col: Math.floor(game.getBoardSize() / 2),
                    layer: Math.floor(game.getBoardLayers() / 2)},
@@ -461,7 +495,7 @@ function TestAddingPlayers()
         goalY: game.getBoardSize() - 1
     }   );
     game.addPlayer({
-        id: 2,
+        id: 1,
         position: {row: game.getBoardSize() - 1,
                    col: Math.floor(game.getBoardSize() / 2),
                    layer: Math.floor(game.getBoardLayers() / 2)},

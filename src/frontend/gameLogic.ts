@@ -2,11 +2,13 @@ import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
 import { ClientMessage, Coordinate, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
+const UNINITIALIZED = -1;
+
 export class GameLogic {
     gridSizeXY: number = 10;
     gridLayers: number = 4;
-    activePlayer: number = 1;
-    id:           number = -1;
+    activePlayer: number = UNINITIALIZED;
+    id:           number = UNINITIALIZED;
 
     cursor: Cursor = {
         pos: [1, 0, 0],
@@ -43,6 +45,8 @@ export class GameLogic {
 
     updatePlayers(players: NetworkPlayer[])
     {
+        console.log("My id is %d", this.id)
+        console.log(players)
         this.players.length = 0;
         players.forEach((player) => {
             this.players.push(
@@ -56,14 +60,14 @@ export class GameLogic {
         });
     }
 
-    getActivePlayer()
+    getActivePlayer(): Player | undefined
     {
-        return this.players[this.activePlayer - 1];
+        return this.players.at(this.activePlayer);
     }
 
     IsMyTurn()
     {
-        if (this.players.length == 0 || !this.id)
+        if (this.players.length == 0 || this.id == UNINITIALIZED)
         {
             return false;
         }
@@ -157,7 +161,7 @@ export class GameLogic {
     commitPawnMove()
     {
         let pos = this.cursor.pos;
-        pos = addVec3(pos, this.players[this.activePlayer - 1].pos);
+        pos = addVec3(pos, this.players[this.activePlayer].pos);
         this.notifyServer(
             {
                 id: this.id,
