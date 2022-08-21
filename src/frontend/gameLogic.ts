@@ -61,6 +61,15 @@ export class GameLogic {
         return this.players[this.activePlayer - 1];
     }
 
+    IsMyTurn()
+    {
+        if (this.players.length == 0 || !this.id)
+        {
+            return false;
+        }
+        return this.getActivePlayer().id == this.id;
+    }
+
     setActivePlayer(id: number)
     {
         this.activePlayer = id;
@@ -129,6 +138,12 @@ export class GameLogic {
 
     commitMove()
     {
+        if (this.id != this.getActivePlayer().id)
+        {
+            console.log("It isn't your turn");
+            return;
+        }
+
         if (this.cursorMode == "pawn")
         {
             this.commitPawnMove();
@@ -145,7 +160,7 @@ export class GameLogic {
         pos = addVec3(pos, this.players[this.activePlayer - 1].pos);
         this.notifyServer(
             {
-                id: this.getActivePlayer().id,
+                id: this.id,
                 action: {
                     coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
                     fence: undefined,
@@ -161,7 +176,7 @@ export class GameLogic {
         let orientation = this.cursor.orientation;
         this.notifyServer(
             {
-                id: this.getActivePlayer().id,
+                id: this.id,
                 action: {
                     coordinate: undefined,
                     fence: this.convertCursorToServerFence(pos, orientation)

@@ -321,7 +321,7 @@ class Engine
                     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 })
 
-                if (this.gameLogic.cursorMode == "pawn")
+                if (this.gameLogic.IsMyTurn() && this.gameLogic.cursorMode == "pawn" )
                 {
                     let modelMat = translate(...addVec3(this.gameLogic.getActivePlayer().pos, this.gameLogic.cursor.pos), identity());
 
@@ -433,7 +433,7 @@ class Engine
                     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 })
 
-                if (this.gameLogic.cursorMode == "fence")
+                if ( this.gameLogic.IsMyTurn() && this.gameLogic.cursorMode == "fence")
                 {
                     let modelMat = translate (...this.gameLogic.cursor.pos, identity());
                     modelMat = scale (1.01, 1.01, 1.01, modelMat); // prevent z fighting

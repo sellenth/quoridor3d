@@ -3,7 +3,7 @@ import { readFile } from "fs"
 import * as path from "path"
 import { game } from "./game_logic"
 
-import { server as WSServer } from "websocket"
+import { connection, server as WSServer } from "websocket"
 import { GameStatePayload, MessageType } from "../shared/types"
 
 const server = http.createServer( (req, res) => {
@@ -52,6 +52,15 @@ function originIsAllowed(_: string) {
 
 let numConnections = 0;
 
+let clients = new Map<number, connection>();
+
+function UpdateAllClients(payload: GameStatePayload)
+{
+    clients.forEach((connection) => {
+        connection.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
+    })
+}
+
 wsServer.on('request', (req) => {
     // TODO: filter origins
     if (!originIsAllowed(req.origin)) {
@@ -60,9 +69,11 @@ wsServer.on('request', (req) => {
         return;
     }
 
-    numConnections++;
 
     let gameStateConnection = req.accept('gamerzone', req.origin);
+    numConnections++;
+    clients.set(numConnections, gameStateConnection);
+
     console.log((new Date()) + ' Connection accepted.');
     console.log("Number of connections: ", numConnections)
 
@@ -75,7 +86,7 @@ wsServer.on('request', (req) => {
 
             game.handleClientMessage(JSON.parse(message.utf8Data),
                 (payload: GameStatePayload) => {
-                    gameStateConnection.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
+                    UpdateAllClients(payload);
                 }
             );
         }
