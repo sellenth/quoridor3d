@@ -102,15 +102,15 @@ class Engine
             if (payload.type == MessageType.Identity)
             {
                 let data = payload.data as IdentityPayload;
-                this.gameLogic.assignId(data.id); 
-                console.log(data.id);
+                this.gameLogic.assignId(data.playerId); 
+                console.log("My id is %s", data.playerId);
             }
             else if (payload.type == MessageType.GameState)
             {
                 let data = payload.data as GameStatePayload;
                 this.gameLogic.updateFences(data.fences);
                 this.gameLogic.updatePlayers(data.players);
-                this.gameLogic.setActivePlayer(data.activePlayer);
+                this.gameLogic.setActivePlayer(data.activePlayerId);
             }
         }
     }

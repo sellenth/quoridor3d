@@ -5,7 +5,7 @@ export type Coordinate = {
 }
 
 export type Player = {
-    id: number;
+    id: string;
     goalY: number;
     numFences: number;
     position: Coordinate;
@@ -37,14 +37,14 @@ export type ServerPayload = {
 export type GameStatePayload = {
     fences: Fence[],
     players: Player[],
-    activePlayer: number
+    activePlayerId: string
 }
 
 export type IdentityPayload = {
-    id: number
+    playerId: string
 }
 
 export type ClientMessage = {
-    id: number,
+    playerId: string,
     action: Action,
 }

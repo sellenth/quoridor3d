@@ -2,13 +2,13 @@ import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
 import { ClientMessage, Coordinate, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
-const UNINITIALIZED = -1;
+const UNINITIALIZED = "NA";
 
 export class GameLogic {
     gridSizeXY: number = 10;
     gridLayers: number = 4;
-    activePlayer: number = UNINITIALIZED;
-    id:           number = UNINITIALIZED;
+    myId:           string = UNINITIALIZED;
+    activePlayerId: string = UNINITIALIZED;
 
     cursor: Cursor = {
         pos: [1, 0, 0],
@@ -25,9 +25,9 @@ export class GameLogic {
         this.fencePositions = [];
     }
 
-    assignId(id: number)
+    assignId(id: string)
     {
-        this.id = id;
+        this.myId = id;
     }
 
     updateFences(fences: Fence[])
@@ -45,8 +45,6 @@ export class GameLogic {
 
     updatePlayers(players: NetworkPlayer[])
     {
-        console.log("My id is %d", this.id)
-        console.log(players)
         this.players.length = 0;
         players.forEach((player) => {
             this.players.push(
@@ -62,21 +60,23 @@ export class GameLogic {
 
     getActivePlayer(): Player | undefined
     {
-        return this.players.at(this.activePlayer);
+        return this.players.find((player) => {
+            return player.id == this.activePlayerId;
+        });
     }
 
     IsMyTurn()
     {
-        if (this.players.length == 0 || this.id == UNINITIALIZED)
+        if (this.players.length == 0 || this.myId == UNINITIALIZED)
         {
             return false;
         }
-        return this.getActivePlayer().id == this.id;
+        return this.getActivePlayer()?.id == this.myId;
     }
 
-    setActivePlayer(id: number)
+    setActivePlayer(id: string)
     {
-        this.activePlayer = id;
+        this.activePlayerId = id;
     }
 
     MoveCursor(v: Vec3)
@@ -142,9 +142,9 @@ export class GameLogic {
 
     commitMove()
     {
-        if (this.id != this.getActivePlayer().id)
+        if (this.myId != this.activePlayerId)
         {
-            console.log("It isn't your turn");
+            console.log("It isn't your turn, it is %d's turn", this.activePlayerId);
             return;
         }
 
@@ -161,10 +161,10 @@ export class GameLogic {
     commitPawnMove()
     {
         let pos = this.cursor.pos;
-        pos = addVec3(pos, this.players[this.activePlayer].pos);
+        pos = addVec3(pos, this.getActivePlayer().pos);
         this.notifyServer(
             {
-                id: this.id,
+                playerId: this.myId,
                 action: {
                     coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
                     fence: undefined,
@@ -180,7 +180,7 @@ export class GameLogic {
         let orientation = this.cursor.orientation;
         this.notifyServer(
             {
-                id: this.id,
+                playerId: this.myId,
                 action: {
                     coordinate: undefined,
                     fence: this.convertCursorToServerFence(pos, orientation)
