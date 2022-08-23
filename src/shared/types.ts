@@ -37,7 +37,7 @@ export type ServerPayload = {
 export type GameStatePayload = {
     fences: Fence[],
     players: Player[],
-    activePlayerId: string
+    activePlayerId: string | undefined
 }
 
 export type IdentityPayload = {

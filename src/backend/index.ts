@@ -3,6 +3,7 @@ import { readFile } from "fs"
 import * as path from "path"
 import { server as WSServer } from "websocket"
 import { configureSocketServer } from "./socket_handler"
+import { PerformTests } from "./tests"
 
 export const server = http.createServer( (req, res) => {
     let filePath = '' + req.url;
@@ -45,3 +46,5 @@ let wsServer = new WSServer({
 })
 
 configureSocketServer(wsServer)
+
+PerformTests();
