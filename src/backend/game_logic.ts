@@ -5,6 +5,7 @@ const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
 const PLAYER_TOKEN = 9;
+const WALL_THRESHOLD = 100
 
 declare global {
     interface Number {
@@ -30,7 +31,7 @@ export class Game
     board: number[][][];
     players: Player[];
     currPlayer: Player | undefined;
-    nextWallNumber = 100;
+    nextWallNumber = WALL_THRESHOLD;
     fenceListForClients: Fence[];
 
     constructor()
@@ -114,27 +115,8 @@ export class Game
         if (this.currPlayer)
         {
             let c = this.currPlayer.position
-            let newPosFinal: Coordinate = {
-                row: c.row + newHeading.row * 2,
-                col: c.col + newHeading.col * 2,
-                layer: c.layer + newHeading.layer * 2
-            }
-            let newPosIntermediate: Coordinate = {
-                row: c.row + newHeading.row,
-                col: c.col + newHeading.col,
-                layer: c.layer + newHeading.layer
-            }
-
-            if (this.inBounds(newPosFinal.row, newPosFinal.col, newPosFinal.layer)
-                &&
-                this.board
-                    [newPosIntermediate.row]
-                    [newPosIntermediate.col]
-                    [newPosIntermediate.layer] == EMPTY_FENCE
-            )
-            {
-                return true;
-            }
+            let {row: headingRow, col: headingCol, layer: headingLayer} = newHeading;
+            return this.TestHeading(this.board, c, headingRow, headingCol, headingLayer);
         }
         return false;
     }
@@ -151,7 +133,7 @@ export class Game
         this.board
             [this.currPlayer.position.row]
             [this.currPlayer.position.col]
-            [this.currPlayer.position.layer] = 3
+            [this.currPlayer.position.layer] = PLAYER_TOKEN;
     }
 
     numPlayers()
@@ -233,7 +215,7 @@ export class Game
     {
         if (this.InvalidWallPosition(orientation, coord)) return false;
 
-        this.UpdateBoardWithNewWall(orientation, coord);
+        this.UpdateBoardWithNewWall(this.board, orientation, coord);
 
         this.fenceListForClients.push({orientation: orientation, coord: coord});
         ++this.nextWallNumber;
@@ -252,7 +234,7 @@ export class Game
             || !this.pathExistsAfterWall(orientation, coord);
     }
 
-    UpdateBoardWithNewWall(orientation: Orientation, coord: Coordinate)
+    UpdateBoardWithNewWall(board: number[][][], orientation: Orientation, coord: Coordinate)
     {
         [0, 1, 2].forEach( (offset: number) => {
             [0, 1, 2].forEach( (offsetPrime) => {
@@ -277,7 +259,7 @@ export class Game
                 }
                 if (this.inBounds(row, col, layer))
                 {
-                    this.board[row][col][layer] = this.nextWallNumber
+                    board[row][col][layer] = this.nextWallNumber
                 }
             });
         });
@@ -383,16 +365,7 @@ export class Game
                 }
             }
 
-            [0, 1, 2, 3].forEach( (offset: number) => {
-                let row     = coordinate.row + (orientation == Orientation.Vertical ? offset : 0);
-                let col     = coordinate.col + (orientation == Orientation.Horizontal ? offset : 0);
-                let layer   = coordinate.layer + (orientation == Orientation.Flat ? offset : 0);
-
-                if (this.inBounds(row, col, layer))
-                {
-                    tmpBoard[row][col][layer] = this.nextWallNumber
-                }
-            });
+            this.UpdateBoardWithNewWall(tmpBoard, orientation, coordinate);
 
             let stack = [ player.position ];
             tmpBoard[player.position.row][player.position.col][player.position.layer] = EXPLORED;
@@ -400,15 +373,12 @@ export class Game
             while (stack.length)
             {
                 let currPosition = stack.pop();
-                if (currPosition)
+                if (currPosition.row == player.goalY)
                 {
-                    if (currPosition.row == player.goalY)
-                    {
-                        return true;
-                    }
-
-                    stack.push(...this.getAdjacentCells(currPosition, tmpBoard));
+                    return true;
                 }
+
+                stack.push(...this.getAdjacentCells(currPosition, tmpBoard));
             }
 
             allPathsExist = false;
@@ -418,20 +388,24 @@ export class Game
         return allPathsExist;
     }
 
+    TestHeading(board: number[][][], coordinate: Coordinate, rowModifier: number, colModifier: number, layerModifier: number)
+    {
+        return (this.inBounds(coordinate.row + rowModifier, coordinate.col + colModifier, coordinate.layer + layerModifier )
+            && board[coordinate.row + rowModifier][coordinate.col + colModifier][coordinate.layer + layerModifier] == EMPTY_FENCE
+            && this.inBounds(coordinate.row + 2 * rowModifier, coordinate.col + 2 * colModifier, coordinate.layer + 2 * layerModifier)
+            && board[coordinate.row + 2 * rowModifier][coordinate.col + 2 * colModifier][coordinate.layer + 2 * layerModifier] != EXPLORED)
+    }
+
     getAdjacentCells(coordinate: Coordinate, board: number[][][])
     {
         let adjacentCells: Coordinate[] = [];
 
         let testDirection = ( rowModifier: number, colModifier: number, layerModifier: number) => {
-            if (this.inBounds(coordinate.row + rowModifier, coordinate.col + colModifier, coordinate.layer + layerModifier )
-                && board[coordinate.row + rowModifier][coordinate.col + colModifier][coordinate.layer + layerModifier] == -1
-                && this.inBounds(coordinate.row + 2 * rowModifier, coordinate.col + 2 * colModifier, coordinate.layer + 2 * layerModifier)
-                && board[coordinate.row + 2 * rowModifier][coordinate.col + 2 * colModifier][coordinate.layer + 2 * layerModifier] != EXPLORED)
-                {
-
-                    adjacentCells.push({row: coordinate.row + 2 * rowModifier, col: coordinate.col + 2 * colModifier, layer: coordinate.layer + 2 * layerModifier});
-                    board[coordinate.row + 2 * rowModifier][coordinate.col + 2 * colModifier][coordinate.layer + 2 * layerModifier] = EXPLORED;
-                }
+            if (this.TestHeading(board, coordinate, rowModifier, colModifier, layerModifier))
+            {
+                adjacentCells.push({row: coordinate.row + 2 * rowModifier, col: coordinate.col + 2 * colModifier, layer: coordinate.layer + 2 * layerModifier});
+                board[coordinate.row + 2 * rowModifier][coordinate.col + 2 * colModifier][coordinate.layer + 2 * layerModifier] = EXPLORED;
+            }
         }
 
         testDirection(-1,  0,  0);

@@ -9,6 +9,7 @@ export function PerformTests()
     TestSinglePlayer();
     TestOddEven();
     TestMovingThroughWall();
+    TestBlockingPath();
 }
 
 function TestAddingPlayers()
@@ -109,6 +110,27 @@ function TestMovingThroughWall()
         layer: 0
     }
     Test("Player cannot move through a wall", game.isValidMove(newHeading) == false);
+}
+
+function TestBlockingPath()
+{
+    const game = new Game();
+
+    game.addPlayer({
+        id: "8008",
+        position: {row: 0,
+                   col: 0,
+                   layer: Math.floor(game.getBoardLayers() / 2)},
+        numFences: 10,
+        goalY: game.getBoardSize() - 1
+    }   );
+
+    game.placeWall(Orientation.Horizontal,   {row: 1, col: 0,  layer: 0});
+    game.placeWall(Orientation.Vertical,   {row: 0, col: 3,  layer: 0});
+    game.drawBoard();
+
+    Test("Cannot place a wall that fully blocks off path to goal", 
+        game.placeWall(Orientation.Flat,   {row: 0, col: 0,  layer: 3}) == false);
 }
 
 function Test(title: string, res: boolean )
