@@ -1,5 +1,5 @@
 import { assert } from "console";
-import { Orientation } from "../shared/types";
+import { Coordinate, Orientation } from "../shared/types";
 import { game, Game } from "./game_logic"
 
 export function PerformTests()
@@ -8,6 +8,7 @@ export function PerformTests()
     TestRemovingPlayers();
     TestSinglePlayer();
     TestOddEven();
+    TestMovingThroughWall();
 }
 
 function TestAddingPlayers()
@@ -85,6 +86,29 @@ function TestOddEven()
     let x = 5;
     Test("Odd number is odd", x.IsOdd() == true);
     Test("Odd number is not even", x.IsEven() == false);
+}
+
+function TestMovingThroughWall()
+{
+    const game = new Game();
+
+    game.addPlayer({
+        id: "8008",
+        position: {row: 0,
+                   col: 0,
+                   layer: Math.floor(game.getBoardLayers() / 2)},
+        numFences: 10,
+        goalY: game.getBoardSize() - 1
+    }   );
+
+    game.placeWall(Orientation.Horizontal,   {row: 1, col: 0,  layer: 0});
+
+    let newHeading: Coordinate = {
+        row: 1,
+        col: 0,
+        layer: 0
+    }
+    Test("Player cannot move through a wall", game.isValidMove(newHeading) == false);
 }
 
 function Test(title: string, res: boolean )

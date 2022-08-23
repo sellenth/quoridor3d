@@ -161,12 +161,11 @@ export class GameLogic {
     commitPawnMove()
     {
         let pos = this.cursor.pos;
-        pos = addVec3(pos, this.getActivePlayer().pos);
         this.notifyServer(
             {
                 playerId: this.myId,
                 action: {
-                    coordinate: {row: pos[2] * 2 - 1, col: pos[0] * 2 - 1, layer: pos[1] * 2 - 1},
+                    heading: {row: pos[2], col: pos[0], layer: pos[1]},
                     fence: undefined,
                 }
             }
@@ -182,7 +181,7 @@ export class GameLogic {
             {
                 playerId: this.myId,
                 action: {
-                    coordinate: undefined,
+                    heading: undefined,
                     fence: this.convertCursorToServerFence(pos, orientation)
                 }
             }

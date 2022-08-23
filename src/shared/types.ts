@@ -12,7 +12,7 @@ export type Player = {
 }
 
 export type Action = {
-    coordinate: Coordinate | undefined;
+    heading: Coordinate | undefined;
     fence: Fence | undefined;
 }
 

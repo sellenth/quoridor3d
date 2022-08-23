@@ -4,6 +4,7 @@ import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, Clien
 const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
+const PLAYER_TOKEN = 9;
 
 declare global {
     interface Number {
@@ -86,15 +87,15 @@ export class Game
         return this.actualBoardLayers;
     }
 
-    processAction({coordinate, fence}: Action)
+    processAction({heading, fence}: Action)
     {
         assert (!!this.currPlayer);
-        if (coordinate)
+        if (heading)
         {
-            if (this.isValidMove(coordinate))
+            if (this.isValidMove(heading))
             {
                 console.log('successful player move')
-                this.currPlayer.position = coordinate;
+                this.MovePlayer(heading);
                 this.switchPlayer();
             }
         }
@@ -108,9 +109,49 @@ export class Game
         }
     }
 
-    isValidMove(_coord: Coordinate)
+    isValidMove(newHeading: Coordinate)
     {
-        return true;
+        if (this.currPlayer)
+        {
+            let c = this.currPlayer.position
+            let newPosFinal: Coordinate = {
+                row: c.row + newHeading.row * 2,
+                col: c.col + newHeading.col * 2,
+                layer: c.layer + newHeading.layer * 2
+            }
+            let newPosIntermediate: Coordinate = {
+                row: c.row + newHeading.row,
+                col: c.col + newHeading.col,
+                layer: c.layer + newHeading.layer
+            }
+
+            if (this.inBounds(newPosFinal.row, newPosFinal.col, newPosFinal.layer)
+                &&
+                this.board
+                    [newPosIntermediate.row]
+                    [newPosIntermediate.col]
+                    [newPosIntermediate.layer] == EMPTY_FENCE
+            )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    MovePlayer(heading: Coordinate)
+    {
+        this.board
+            [this.currPlayer.position.row]
+            [this.currPlayer.position.col]
+            [this.currPlayer.position.layer] = EMPTY_CELL
+        this.currPlayer.position.row += heading.row * 2;
+        this.currPlayer.position.col += heading.col * 2;
+        this.currPlayer.position.layer += heading.layer * 2;
+        this.board
+            [this.currPlayer.position.row]
+            [this.currPlayer.position.col]
+            [this.currPlayer.position.layer] = 3
     }
 
     numPlayers()
@@ -180,7 +221,7 @@ export class Game
     {
         this.players.push(player);
 
-        this.board[player.position.row][player.position.col][player.position.layer] = this.numPlayers();
+        this.board[player.position.row][player.position.col][player.position.layer] = PLAYER_TOKEN;
 
         if (this.currPlayer == undefined)
         {
