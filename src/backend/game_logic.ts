@@ -167,7 +167,7 @@ export class Game
                 position: {row: 0,
                         col: Math.floor(game.getBoardSize() / 2),
                         layer: Math.floor(game.getBoardLayers() / 2)},
-                numFences: 10,
+                numFences: 1,
                 goalY: game.getBoardSize() - 1
             }   );
         }
@@ -178,7 +178,7 @@ export class Game
                 position: {row: game.getBoardSize() - 1,
                         col: Math.floor(game.getBoardSize() / 2),
                         layer: Math.floor(game.getBoardLayers() / 2)},
-                numFences: 10,
+                numFences: 1,
                 goalY: 0
             }  );
         }
@@ -213,9 +213,11 @@ export class Game
 
     placeWall(orientation: Orientation, coord: Coordinate): boolean
     {
+        if (this.currPlayer.numFences <= 0) return false;
         if (this.InvalidWallPosition(orientation, coord)) return false;
 
         this.UpdateBoardWithNewWall(this.board, orientation, coord);
+        this.currPlayer.numFences--;
 
         this.fenceListForClients.push({orientation: orientation, coord: coord});
         ++this.nextWallNumber;
@@ -299,7 +301,6 @@ export class Game
             && coord.col <= this.actualBoardSize - 3
             && coord.row <= this.actualBoardSize - 3;
     }
-
 
     wallIntersects(orientation: Orientation, coordinate: Coordinate)
     {

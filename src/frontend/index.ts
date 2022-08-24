@@ -5,7 +5,8 @@ import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
 import { Mat4 } from "./types.js";
-import { ClientMessage, GameStatePayload, IdentityPayload, MessageType, Orientation, ServerPayload } from "../shared/types.js"
+import { ClientMessage, GameStatePayload, IdentityPayload, 
+    MessageType, Orientation, Player, ServerPayload } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -14,6 +15,42 @@ type VisualUnit =
     program: WebGLProgram;
     VAO: WebGLVertexArrayObject;
     render: (projMat: Mat4, viewMat: Mat4) => void;
+}
+
+class WallCountHandler
+{
+    myWallsElement: Node;
+    theirWallsElements: Node;
+    constructor()
+    {
+        this.myWallsElement = document.querySelector("#myWalls");
+        this.theirWallsElements = document.querySelector("#theirWalls");
+    }
+
+    Update(myID: string, players: Player[])
+    {
+        players.forEach((player) => {
+            if (player.id == myID)
+            {
+                this.UpdateMyWalls(player.numFences);
+            }
+            else
+            {
+                this.UpdateTheirWalls(player.numFences)
+            }
+        })
+
+    }
+
+    UpdateMyWalls(numWalls: number)
+    {
+        this.myWallsElement.textContent = "Me - " + numWalls;
+    }
+
+    UpdateTheirWalls(numWalls: number)
+    {
+        this.theirWallsElements.textContent = "Them - " + numWalls;
+    }
 }
 
 class FrameTiming
@@ -51,6 +88,7 @@ class Engine
     camera: Camera;
     frameTiming: FrameTiming;
     gameStateSocket: WebSocket;
+    wallCountHandler: WallCountHandler;
 
 
     constructor()
@@ -77,6 +115,7 @@ class Engine
         this.configurePrograms();
 
         this.frameTiming = new FrameTiming();
+        this.wallCountHandler = new WallCountHandler();
 
         this.configureWebsocket();
 
@@ -111,6 +150,7 @@ class Engine
                 this.gameLogic.updateFences(data.fences);
                 this.gameLogic.updatePlayers(data.players);
                 this.gameLogic.setActivePlayer(data.activePlayerId);
+                this.wallCountHandler.Update(this.gameLogic.myId, data.players);
             }
         }
     }
