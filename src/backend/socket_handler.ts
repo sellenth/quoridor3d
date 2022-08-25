@@ -1,6 +1,6 @@
 import { game } from "./game_logic"
 
-import { GameStatePayload, MessageType } from "../shared/types"
+import { GameStatePayload, MessageType, Payload } from "../shared/types"
 import { server as WSServer } from "websocket"
 import { randomUUID } from "crypto"
 import { connection } from "websocket";
@@ -32,18 +32,14 @@ export function configureSocketServer(server: WSServer)
         console.log("It is player %s's turn", game.currPlayer?.id)
 
 
-        gameStateConnection.send(JSON.stringify({ type: MessageType.Identity, data: { playerId: connectionUUID } }));
-        UpdateAllClients(game.getGameState());
+        gameStateConnection.send(JSON.stringify({ type: MessageType.Identity, data: connectionUUID }));
+        UpdateAllClients(MessageType.GameState, game.getGameState());
 
         gameStateConnection.on('message', (message) => {
             if (message.type == 'utf8') {
                 console.log('Received Message: ' + message.utf8Data);
 
-                game.handleClientMessage(JSON.parse(message.utf8Data),
-                    (payload: GameStatePayload) => {
-                        UpdateAllClients(payload);
-                    }
-                );
+                game.handleClientMessage(JSON.parse(message.utf8Data));
             }
         });
 
@@ -51,7 +47,7 @@ export function configureSocketServer(server: WSServer)
             game.RemovePlayer(connectionUUID);
             clients.delete(connectionUUID);
             numConnections--;
-            UpdateAllClients(game.getGameState());
+            UpdateAllClients(MessageType.GameState, game.getGameState());
             console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
         });
     });
@@ -62,9 +58,9 @@ function originIsAllowed(_: string) {
     return true;
 }
 
-function UpdateAllClients(payload: GameStatePayload)
+export function UpdateAllClients(type: MessageType, payload: Payload)
 {
     clients.forEach((socket) => {
-        socket.send(JSON.stringify({ type:MessageType.GameState, data: payload}));
+        socket.send(JSON.stringify({ type: type, data: payload}));
     })
 }

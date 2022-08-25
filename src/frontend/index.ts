@@ -5,8 +5,8 @@ import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
 import { Mat4 } from "./types.js";
-import { ClientMessage, GameStatePayload, IdentityPayload, 
-    MessageType, Orientation, Player, ServerPayload } from "../shared/types.js"
+import { ClientMessage, GameStatePayload, ID, MessageType, Orientation, 
+    Player, ServerPayload } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -22,6 +22,8 @@ class GameStatusHandler
     myWallsElement: Node;
     theirWallsElement: Node;
     turnIndicatorElement: Node;
+    GameOverModal: Node;
+
     constructor()
     {
         this.myWallsElement = document.querySelector("#myWalls");
@@ -29,7 +31,7 @@ class GameStatusHandler
         this.turnIndicatorElement = document.querySelector("#turnIndicator");
     }
 
-    Update(myID: string, state: GameStatePayload)
+    Update(myID: ID, state: GameStatePayload)
     {
         state.players.forEach((player) => {
             this.UpdateWalls(myID, player);
@@ -38,14 +40,19 @@ class GameStatusHandler
 
     }
 
-    UpdateWalls(myID: string, player: Player)
+    GameOver(myID: ID)
+    {
+
+    }
+
+    UpdateWalls(myID: ID, player: Player)
     {
         const who = myID == player.id ? "You" : "Them";
         const indicatorElement = myID == player.id ? this.myWallsElement : this.theirWallsElement;
         indicatorElement.textContent = `${who} - ${player.numFences}`;
     }
 
-    UpdateTurnIndicator(myID: string, activePlayerId: string)
+    UpdateTurnIndicator(myID: ID, activePlayerId: ID)
     {
         let who = myID == activePlayerId ? "your" : "their";
         this.turnIndicatorElement.textContent = `It's ${who} turn.`
@@ -87,7 +94,7 @@ class Engine
     camera: Camera;
     frameTiming: FrameTiming;
     gameStateSocket: WebSocket;
-    wallCountHandler: GameStatusHandler;
+    gameStatusHandler: GameStatusHandler;
 
 
     constructor()
@@ -114,7 +121,7 @@ class Engine
         this.configurePrograms();
 
         this.frameTiming = new FrameTiming();
-        this.wallCountHandler = new GameStatusHandler();
+        this.gameStatusHandler = new GameStatusHandler();
 
         this.configureWebsocket();
 
@@ -139,9 +146,8 @@ class Engine
         {
             if (payload.type == MessageType.Identity)
             {
-                let data = payload.data as IdentityPayload;
-                this.gameLogic.assignId(data.playerId); 
-                console.log("My id is %s", data.playerId);
+                let id = payload.data as ID;
+                this.gameLogic.assignId(id); 
             }
             else if (payload.type == MessageType.GameState)
             {
@@ -149,7 +155,11 @@ class Engine
                 this.gameLogic.updateFences(data.fences);
                 this.gameLogic.updatePlayers(data.players);
                 this.gameLogic.setActivePlayer(data.activePlayerId);
-                this.wallCountHandler.Update(this.gameLogic.myId, data);
+                this.gameStatusHandler.Update(this.gameLogic.myId, data);
+            }
+            else if (payload.type == MessageType.GameOver)
+            {
+                this.gameStatusHandler.GameOver(payload.data as ID);
             }
         }
     }

@@ -1,14 +1,14 @@
 import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
-import { ClientMessage, Coordinate, Fence, Orientation, Player as NetworkPlayer } from "../shared/types.js";
+import { ClientMessage, Coordinate, Fence, ID, Orientation, Player as NetworkPlayer } from "../shared/types.js";
 
 const UNINITIALIZED = "NA";
 
 export class GameLogic {
     gridSizeXY: number = 10;
     gridLayers: number = 4;
-    myId:           string = UNINITIALIZED;
-    activePlayerId: string = UNINITIALIZED;
+    myId:           ID = UNINITIALIZED;
+    activePlayerId: ID = UNINITIALIZED;
 
     cursor: Cursor = {
         pos: [1, 0, 0],
@@ -25,7 +25,7 @@ export class GameLogic {
         this.fencePositions = [];
     }
 
-    assignId(id: string)
+    assignId(id: ID)
     {
         this.myId = id;
     }
@@ -74,7 +74,7 @@ export class GameLogic {
         return this.getActivePlayer()?.id == this.myId;
     }
 
-    setActivePlayer(id: string)
+    setActivePlayer(id: ID)
     {
         this.activePlayerId = id;
     }
@@ -118,7 +118,6 @@ export class GameLogic {
 
     switchCursorMode()
     {
-        console.log(this.cursor)
         if (this.cursorMode == "fence")
         {
             this.cursorMode = "pawn";

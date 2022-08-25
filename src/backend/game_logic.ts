@@ -1,11 +1,13 @@
 import { assert } from "console";
-import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientMessage } from "../shared/types"
+import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientMessage, MessageType, ID } from "../shared/types"
+import { UpdateAllClients } from "../backend/socket_handler"
 
 const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
 const PLAYER_TOKEN = 9;
-const WALL_THRESHOLD = 100
+const WALL_THRESHOLD = 100;
+const NUM_STARTING_FENCES = 10;
 
 declare global {
     interface Number {
@@ -59,12 +61,12 @@ export class Game
         }
     }
 
-    handleClientMessage(msg: ClientMessage, callback: (payload: GameStatePayload) => void)
+    handleClientMessage(msg: ClientMessage)
     {
         if (this.currPlayer && this.currPlayer.id == msg.playerId)
         {
             this.processAction(msg.action);
-            callback(this.getGameState());
+            UpdateAllClients(MessageType.GameState, this.getGameState());
         }
         this.drawBoard();
     }
@@ -97,6 +99,7 @@ export class Game
             {
                 console.log('successful player move')
                 this.MovePlayer(heading);
+                this.CheckIfGameOver();
                 this.switchPlayer();
             }
         }
@@ -108,6 +111,16 @@ export class Game
                 this.switchPlayer();
             }
         }
+    }
+
+    CheckIfGameOver()
+    {
+        this.players.forEach((player) => {
+            if (player.position.row == player.goalY) 
+            {
+                UpdateAllClients(MessageType.GameOver, player.id);
+            }
+        })
     }
 
     isValidMove(newHeading: Coordinate)
@@ -158,7 +171,7 @@ export class Game
         return this.currPlayer?.id;
     }
 
-    CreatePlayer(id: string)
+    CreatePlayer(id: ID)
     {
         if (this.players.length == 0)
         {
@@ -167,7 +180,7 @@ export class Game
                 position: {row: 0,
                         col: Math.floor(game.getBoardSize() / 2),
                         layer: Math.floor(game.getBoardLayers() / 2)},
-                numFences: 1,
+                numFences: NUM_STARTING_FENCES,
                 goalY: game.getBoardSize() - 1
             }   );
         }
@@ -178,13 +191,13 @@ export class Game
                 position: {row: game.getBoardSize() - 1,
                         col: Math.floor(game.getBoardSize() / 2),
                         layer: Math.floor(game.getBoardLayers() / 2)},
-                numFences: 1,
+                numFences: NUM_STARTING_FENCES,
                 goalY: 0
             }  );
         }
     }
 
-    RemovePlayer(id: string)
+    RemovePlayer(id: ID)
     {
         if (id != undefined)
         {
