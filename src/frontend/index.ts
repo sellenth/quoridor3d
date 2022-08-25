@@ -17,39 +17,38 @@ type VisualUnit =
     render: (projMat: Mat4, viewMat: Mat4) => void;
 }
 
-class WallCountHandler
+class GameStatusHandler
 {
     myWallsElement: Node;
-    theirWallsElements: Node;
+    theirWallsElement: Node;
+    turnIndicatorElement: Node;
     constructor()
     {
         this.myWallsElement = document.querySelector("#myWalls");
-        this.theirWallsElements = document.querySelector("#theirWalls");
+        this.theirWallsElement = document.querySelector("#theirWalls");
+        this.turnIndicatorElement = document.querySelector("#turnIndicator");
     }
 
-    Update(myID: string, players: Player[])
+    Update(myID: string, state: GameStatePayload)
     {
-        players.forEach((player) => {
-            if (player.id == myID)
-            {
-                this.UpdateMyWalls(player.numFences);
-            }
-            else
-            {
-                this.UpdateTheirWalls(player.numFences)
-            }
+        state.players.forEach((player) => {
+            this.UpdateWalls(myID, player);
         })
+        this.UpdateTurnIndicator(myID, state.activePlayerId);
 
     }
 
-    UpdateMyWalls(numWalls: number)
+    UpdateWalls(myID: string, player: Player)
     {
-        this.myWallsElement.textContent = "Me - " + numWalls;
+        const who = myID == player.id ? "You" : "Them";
+        const indicatorElement = myID == player.id ? this.myWallsElement : this.theirWallsElement;
+        indicatorElement.textContent = `${who} - ${player.numFences}`;
     }
 
-    UpdateTheirWalls(numWalls: number)
+    UpdateTurnIndicator(myID: string, activePlayerId: string)
     {
-        this.theirWallsElements.textContent = "Them - " + numWalls;
+        let who = myID == activePlayerId ? "your" : "their";
+        this.turnIndicatorElement.textContent = `It's ${who} turn.`
     }
 }
 
@@ -88,7 +87,7 @@ class Engine
     camera: Camera;
     frameTiming: FrameTiming;
     gameStateSocket: WebSocket;
-    wallCountHandler: WallCountHandler;
+    wallCountHandler: GameStatusHandler;
 
 
     constructor()
@@ -115,7 +114,7 @@ class Engine
         this.configurePrograms();
 
         this.frameTiming = new FrameTiming();
-        this.wallCountHandler = new WallCountHandler();
+        this.wallCountHandler = new GameStatusHandler();
 
         this.configureWebsocket();
 
@@ -150,7 +149,7 @@ class Engine
                 this.gameLogic.updateFences(data.fences);
                 this.gameLogic.updatePlayers(data.players);
                 this.gameLogic.setActivePlayer(data.activePlayerId);
-                this.wallCountHandler.Update(this.gameLogic.myId, data.players);
+                this.wallCountHandler.Update(this.gameLogic.myId, data);
             }
         }
     }
