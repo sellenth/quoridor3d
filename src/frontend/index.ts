@@ -40,9 +40,11 @@ class GameStatusHandler
 
     }
 
-    GameOver(myID: ID)
+    GameOver(myID: ID, winningID: ID)
     {
-
+        const el = document.querySelector("#gameOver");
+        el.textContent = myID == winningID ? "You win" : "Better luck next time";
+        el.classList.add("fancy-animation");
     }
 
     UpdateWalls(myID: ID, player: Player)
@@ -159,7 +161,7 @@ class Engine
             }
             else if (payload.type == MessageType.GameOver)
             {
-                this.gameStatusHandler.GameOver(payload.data as ID);
+                this.gameStatusHandler.GameOver(this.gameLogic.myId, payload.data as ID);
             }
         }
     }

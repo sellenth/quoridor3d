@@ -7,7 +7,7 @@ const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;
 const PLAYER_TOKEN = 9;
 const WALL_THRESHOLD = 100;
-const NUM_STARTING_FENCES = 10;
+const NUM_STARTING_FENCES = 15;
 
 declare global {
     interface Number {
@@ -35,6 +35,7 @@ export class Game
     currPlayer: Player | undefined;
     nextWallNumber = WALL_THRESHOLD;
     fenceListForClients: Fence[];
+    gameOver: boolean
 
     constructor()
     {
@@ -42,6 +43,7 @@ export class Game
         this.InitializeEmptyBoard();
         this.players = [];
         this.fenceListForClients = [];
+        this.gameOver = false;
         console.log("Game has been successfully initialized...");
     }
 
@@ -63,7 +65,7 @@ export class Game
 
     handleClientMessage(msg: ClientMessage)
     {
-        if (this.currPlayer && this.currPlayer.id == msg.playerId)
+        if (this.currPlayer && this.currPlayer.id == msg.playerId && !this.gameOver)
         {
             this.processAction(msg.action);
             UpdateAllClients(MessageType.GameState, this.getGameState());
@@ -118,6 +120,7 @@ export class Game
         this.players.forEach((player) => {
             if (player.position.row == player.goalY) 
             {
+                this.gameOver = true;
                 UpdateAllClients(MessageType.GameOver, player.id);
             }
         })
@@ -205,7 +208,7 @@ export class Game
                 return player.id != id;
             })
 
-            if (id == this.currPlayer.id)
+            if (id == this.currPlayer?.id)
             {
                 this.switchPlayer()
             }

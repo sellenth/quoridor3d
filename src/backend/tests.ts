@@ -127,7 +127,6 @@ function TestBlockingPath()
 
     game.placeWall(Orientation.Horizontal,   {row: 1, col: 0,  layer: 0});
     game.placeWall(Orientation.Vertical,   {row: 0, col: 3,  layer: 0});
-    game.drawBoard();
 
     Test("Cannot place a wall that fully blocks off path to goal", 
         game.placeWall(Orientation.Flat,   {row: 0, col: 0,  layer: 3}) == false);
