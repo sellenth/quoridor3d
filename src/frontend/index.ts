@@ -131,8 +131,7 @@ class Engine
 
     configureWebsocket()
     {
-        //let connectionURL = "ws://localhost:8008";
-        let connectionURL = "ws://quor3dor.herokuapp.com/"
+        let connectionURL = location.origin.replace(/^http/, 'ws')
         this.gameStateSocket = new WebSocket(connectionURL, "gamerzone");
 
         this.gameStateSocket.onmessage = (msg) => {
