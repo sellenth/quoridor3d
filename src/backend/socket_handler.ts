@@ -1,9 +1,9 @@
 import { game } from "./game_logic"
 
-import { GameStatePayload, MessageType, Payload } from "../shared/types"
+import { MessageType, Payload } from "../shared/types"
 import { server as WSServer } from "websocket"
 import { randomUUID } from "crypto"
-import { connection } from "websocket";
+import { connection } from "websocket"
 
 let numConnections = 0;
 
