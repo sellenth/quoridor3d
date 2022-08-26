@@ -2,6 +2,7 @@ import { assert } from "console";
 import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientMessage, MessageType, ID } from "../shared/types"
 import { UpdateAllClients } from "../backend/socket_handler"
 
+
 const EXPLORED = 999;
 const EMPTY_FENCE = -1;
 const EMPTY_CELL = 0;

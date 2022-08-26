@@ -38,7 +38,7 @@ export const server = http.createServer( (req, res) => {
         }
 
     });
-}).listen(8008);
+}).listen(process.env.PORT || 8008);
 
 let wsServer = new WSServer({
    httpServer: server,
@@ -47,4 +47,7 @@ let wsServer = new WSServer({
 
 configureSocketServer(wsServer)
 
-PerformTests();
+if (process.env.NODE_ENV == "dev")
+{
+    PerformTests();
+}

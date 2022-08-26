@@ -4,7 +4,8 @@
     "description": "The beloved abstract strategy game Quoridor, now in three dimensions.",
     "main": "src/backend/index.js",
     "scripts": {
-        "start": "npx ts-node ./src/backend/index.ts",
+        "start": "npm run build-front && npm run run-back",
+        "run-back": "npx ts-node ./src/backend/index.ts",
         "build-front": "npx tsc --p ./src/frontend"
     },
     "keywords": [
@@ -15,11 +16,11 @@
     "author": "HS",
     "license": "ISC",
     "dependencies": {
-        "@types/node": "^17.0.35",
+        "@types/node": "^17.0.45",
         "@types/websocket": "^1.0.5",
-        "typescript": "^4.6.4",
-        "websocket": "^1.0.34",
         "ts-node": "^10.8.0",
-        "tsconfig-paths": "^4.1.0"
+        "tsconfig-paths": "^4.1.0",
+        "typescript": "^4.6.4",
+        "websocket": "^1.0.34"
     }
 }
