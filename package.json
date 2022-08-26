@@ -4,8 +4,7 @@
     "description": "The beloved abstract strategy game Quoridor, now in three dimensions.",
     "main": "src/backend/index.js",
     "scripts": {
-        "start": "npm run build-front && npm run run-back",
-        "run-back": "npx ts-node ./src/backend/index.ts",
+        "start": "npx ts-node ./src/backend/index.ts",
         "build-front": "npx tsc --p ./src/frontend"
     },
     "keywords": [
