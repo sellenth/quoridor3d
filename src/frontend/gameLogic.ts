@@ -1,6 +1,7 @@
 import { Cursor, Vec3, Player } from "./types.js"
 import { addVec3 } from "./math.js";
 import { ClientMessage, Coordinate, Fence, ID, Orientation, Player as NetworkPlayer } from "../shared/types.js";
+import { clamp } from "./utils.js";
 
 const UNINITIALIZED = "NA";
 
@@ -89,7 +90,38 @@ export class GameLogic {
         else if (this.cursorMode == "fence")
         {
             this.cursor.pos = addVec3(this.cursor.pos, v);
+            this.ClampCursorToBoard();
         }
+
+    }
+
+    ClampCursorToBoard()
+    {
+        let xModifier = 0;
+        let yModifier = 0;
+        let zModifier = 0;
+        if (this.cursorMode == "fence")
+        {
+            switch (this.cursor.orientation)
+            {
+                case Orientation.Horizontal:
+                    xModifier = 2;
+                    yModifier = 2;
+                    break;
+                case Orientation.Vertical:
+                    zModifier = 2;
+                    yModifier = 2;
+                    break;
+                case Orientation.Flat:
+                    xModifier = 2;
+                    zModifier = 2;
+                    break;
+
+            }
+        }
+        this.cursor.pos[0] = clamp(this.cursor.pos[0], 0, this.gridSizeXY - 1 - xModifier);
+        this.cursor.pos[1] = clamp(this.cursor.pos[1], 0, this.gridLayers - 1 - yModifier);
+        this.cursor.pos[2] = clamp(this.cursor.pos[2], 0, this.gridSizeXY - 1 - zModifier);
     }
 
     MoveCursorUp() {
@@ -137,6 +169,7 @@ export class GameLogic {
         {
             this.cursor.orientation = Orientation.Horizontal;
         }
+        this.ClampCursorToBoard();
     }
 
     commitMove()

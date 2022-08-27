@@ -56,7 +56,7 @@ class GameStatusHandler
 
     UpdateTurnIndicator(myID: ID, activePlayerId: ID)
     {
-        let who = myID == activePlayerId ? "your" : "their";
+        let who = myID == activePlayerId ? "your" : "the other player's";
         this.turnIndicatorElement.textContent = `It's ${who} turn.`
     }
 }

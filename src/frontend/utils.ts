@@ -44,6 +44,11 @@ export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export function clamp(n: number, low: number, high: number)
+{
+    return Math.max(low, Math.min(n, high));
+}
+
 export function logMatrix(m: Mat4)
 {
     for (let i = 0; i < 4; i++)
