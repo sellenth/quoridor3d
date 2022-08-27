@@ -1,6 +1,6 @@
 import { game } from "./game_logic"
 
-import { MessageType, Payload } from "../shared/types"
+import { ClientMessage, ClientAction, MessageType, NetworkCamera, Payload } from "../shared/types"
 import { server as WSServer } from "websocket"
 import { randomUUID } from "crypto"
 import { connection } from "websocket"
@@ -8,6 +8,15 @@ import { connection } from "websocket"
 let numConnections = 0;
 
 let clients = new Map<string, connection>();
+let clientCams = new Map<string, NetworkCamera>();
+
+setInterval(() => {
+    if (clients.size > 0)
+    {
+        const arr = Array.from(clientCams.values());
+        UpdateAllClients(MessageType.Cameras, arr);
+    }
+}, 1000)
 
 export function configureSocketServer(server: WSServer)
 {
@@ -37,9 +46,18 @@ export function configureSocketServer(server: WSServer)
 
         gameStateConnection.on('message', (message) => {
             if (message.type == 'utf8') {
-                console.log('Received Message: ' + message.utf8Data);
 
-                game.handleClientMessage(JSON.parse(message.utf8Data));
+                const msg = JSON.parse(message.utf8Data) as ClientMessage;
+                if (msg.type == MessageType.ClientAction)
+                {
+                    console.log('Received Message: ' + message.utf8Data);
+                    game.handleClientMessage(msg.payload as ClientAction);
+                }
+                else if (msg.type == MessageType.ClientCameraPos)
+                {
+                    const payload = msg.payload as NetworkCamera;
+                    clientCams.set(payload.id, payload);
+                }
             }
         });
 
@@ -51,7 +69,6 @@ export function configureSocketServer(server: WSServer)
             console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
         });
     });
-
 }
 
 function originIsAllowed(_: string) {

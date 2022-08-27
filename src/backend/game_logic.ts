@@ -1,5 +1,5 @@
 import { assert } from "console";
-import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientMessage, MessageType, ID } from "../shared/types"
+import { Action, GameStatePayload, Player, Fence, Orientation, Coordinate, ClientAction, MessageType, ID } from "../shared/types"
 import { UpdateAllClients } from "../backend/socket_handler"
 
 
@@ -65,7 +65,7 @@ export class Game
         }
     }
 
-    handleClientMessage(msg: ClientMessage)
+    handleClientMessage(msg: ClientAction)
     {
         if (this.currPlayer && this.currPlayer.id == msg.playerId && !this.gameOver)
         {
@@ -225,9 +225,9 @@ export class Game
         if (this.players.length == 0)
         {
             setTimeout(() => {
-                console.log('should be clearing board')
                 if (this.players.length ==0)
                 {
+                    console.log('should be clearing board')
                     this.InitializeEmptyBoard();
                     this.fenceListForClients.length = 0;
                 }

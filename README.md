@@ -13,6 +13,9 @@ After you've started the backend, the game will be available on port 8008
 - [x] win condition
 - [x] have hosted build working
 - [x] bound cursor to board limits
+- [x] add camera model
+- [x] network camera models
+- [ ] start camera behind player position
 - [ ] fix start position of added players
 - [ ] unify naming of walls/fences
 - [ ] unify style of function casing
@@ -20,6 +23,4 @@ After you've started the backend, the game will be available on port 8008
 - [ ] restyle players
 - [ ] make cursor movement relative to camera's front
 - [ ] factor out board operations into new class
-- [ ] add camera model
-- [ ] network camera models
 - [ ] allow spectators

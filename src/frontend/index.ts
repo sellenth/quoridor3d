@@ -1,12 +1,11 @@
 import vss from "./vs.js";
-import { fsFence, fsPlayer, fsGrid } from "./fs.js";
+import { fsFence, fsPlayer, fsCamera, fsGrid } from "./fs.js";
 import { createShader, createProgram, resizeCanvasToDisplaySize, sleep } from "./utils.js"
-import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale } from "./math.js"
+import { identity, translate, projection, addVec3, rotationYZ, rotationXZ, scale, degreesToRadians } from "./math.js"
 import { Camera } from "./camera.js";
 import { GameLogic } from "./gameLogic.js";
-import { Mat4 } from "./types.js";
-import { ClientMessage, GameStatePayload, ID, MessageType, Orientation, 
-    Player, ServerPayload } from "../shared/types.js"
+import { ClientMessage, GameStatePayload, ID, MessageType, Orientation,
+    Player, ServerPayload, Mat4, NetworkCamera } from "../shared/types.js"
 
 const szFLOAT = 4;
 
@@ -94,6 +93,7 @@ class Engine
     gl: WebGL2RenderingContext;
     sceneObjects: VisualUnit[];
     camera: Camera;
+    networkedCameras: NetworkCamera[];
     frameTiming: FrameTiming;
     gameStateSocket: WebSocket;
     gameStatusHandler: GameStatusHandler;
@@ -120,6 +120,8 @@ class Engine
                                 this.gameLogic.gridLayers,
                                 this.gameLogic.gridSizeXY ]);
 
+        this.networkedCameras = [];
+
         this.configurePrograms();
 
         this.frameTiming = new FrameTiming();
@@ -141,28 +143,46 @@ class Engine
         this.gameLogic.notifyServer = (msg: ClientMessage) => {
             this.gameStateSocket.send(JSON.stringify(msg));
         };
+
+        setInterval(() => {
+            this.gameStateSocket.send(JSON.stringify(
+                {
+                    type: MessageType.ClientCameraPos,
+                    payload: {
+                        position: this.camera.GetPosition(),
+                        yaw: this.camera.GetYaw(),
+                        pitch: this.camera.GetPitch(),
+                        id: this.gameLogic.myId
+                    }
+
+                }
+            ))
+        }, 1000)
     }
 
     handleServerPayload(payload: ServerPayload)
     {
         if (this.gameLogic)
         {
-            if (payload.type == MessageType.Identity)
+            switch (payload.type)
             {
-                let id = payload.data as ID;
-                this.gameLogic.assignId(id); 
-            }
-            else if (payload.type == MessageType.GameState)
-            {
-                let data = payload.data as GameStatePayload;
-                this.gameLogic.updateFences(data.fences);
-                this.gameLogic.updatePlayers(data.players);
-                this.gameLogic.setActivePlayer(data.activePlayerId);
-                this.gameStatusHandler.Update(this.gameLogic.myId, data);
-            }
-            else if (payload.type == MessageType.GameOver)
-            {
-                this.gameStatusHandler.GameOver(this.gameLogic.myId, payload.data as ID);
+                case MessageType.Identity:
+                    let id = payload.data as ID;
+                    this.gameLogic.assignId(id);
+                    break;
+                case MessageType.GameState:
+                    let data = payload.data as GameStatePayload;
+                    this.gameLogic.updateFences(data.fences);
+                    this.gameLogic.updatePlayers(data.players);
+                    this.gameLogic.setActivePlayer(data.activePlayerId);
+                    this.gameStatusHandler.Update(this.gameLogic.myId, data);
+                    break;
+                case MessageType.GameOver:
+                    this.gameStatusHandler.GameOver(this.gameLogic.myId, payload.data as ID);
+                    break;
+                case MessageType.Cameras:
+                    this.networkedCameras = payload.data as NetworkCamera[];
+                    break;
             }
         }
     }
@@ -201,6 +221,7 @@ class Engine
     {
         this.sceneObjects = [];
         this.sceneObjects.push(this.createPlayerProgram());
+        this.sceneObjects.push(this.createCameraProgram());
         this.sceneObjects.push(this.createFenceProgram());
         this.sceneObjects.push(this.createGridProgram());
     }
@@ -385,6 +406,119 @@ class Engine
 
                     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 }
+            }
+        };
+    }
+
+    createCameraProgram()
+    {
+        const gl = this.gl;
+        let vs = createShader(gl, gl.VERTEX_SHADER, vss);
+        let fs = createShader(gl, gl.FRAGMENT_SHADER, fsCamera);
+
+        let cameraProgram = createProgram(gl, vs, fs);
+        let cameraPosAttrib = gl.getAttribLocation(cameraProgram, "a_position");
+
+        let cameraVAO = gl.createVertexArray();
+        gl.bindVertexArray(cameraVAO);
+
+        let buff = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buff);
+
+        let cameraVertices = [
+            .2, .2, 0,
+            .8, .2, 0,
+            .8, .8, 0,
+            .2, .8, 0,
+
+            .2, .2, .6,
+            .8, .2, .6,
+            .8, .8, .6,
+            .2, .8, .6,
+
+            .5, .5, .5, //8
+            .2, .2, .9, //9
+            .2, .8, .9, //10
+            .8, .2, .9, //11
+            .8, .8, .9, //12
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cameraVertices), gl.STATIC_DRAW);
+
+        let elBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elBuff);
+        let elements = [
+            0, 1, 2,
+            0, 2, 3,
+
+            4, 5, 6,
+            4, 6, 7,
+
+            0, 3, 4,
+            3, 4, 7,
+
+            1, 5, 6,
+            1, 2, 6,
+
+            0, 1, 4,
+            1, 4, 5,
+
+            2, 3, 6,
+            3, 6, 7,
+
+            8, 9, 10,
+            8, 10, 11,
+            8, 11, 12,
+            8, 9, 12,
+
+            9, 10, 11,
+            10, 11, 12
+        ];
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);
+
+
+        gl.enableVertexAttribArray(cameraPosAttrib);
+
+        // binds currently bound array_buffer (positionBuffer) & ebo (elBuff) to this attribPointer
+        gl.vertexAttribPointer(cameraPosAttrib, // vertex attribute to modify
+                               3, // how many elements per attribute
+                               gl.FLOAT, // type of individual element
+                               false, //normalize
+                               3 * szFLOAT, //stride
+                               0 //offset from start of buffer
+                              );
+
+        return {
+            program: cameraProgram,
+            VAO: cameraVAO,
+            render: (projMat: Mat4, viewMat: Mat4) => {
+                gl.useProgram(cameraProgram);
+                gl.bindVertexArray(cameraVAO);
+
+                let projLoc = gl.getUniformLocation(cameraProgram, "projection");
+                gl.uniformMatrix4fv(projLoc, false, projMat);
+
+                let camLoc = gl.getUniformLocation(cameraProgram, "camera");
+                gl.uniformMatrix4fv(camLoc, false, viewMat);
+
+
+                this.networkedCameras.forEach((camera) => {
+                    if (camera.id != this.gameLogic.myId)
+                    {
+                        let modelMat = translate(...camera.position, identity());
+                        modelMat = translate(-.5, -.5, 0, modelMat);
+                        modelMat = rotationXZ( degreesToRadians(camera.yaw + 90), modelMat );
+                        modelMat = rotationYZ( degreesToRadians(camera.pitch * -1), modelMat );
+
+                        let colorLoc = gl.getUniformLocation(cameraProgram, "color");
+                        gl.uniform3fv(colorLoc, [.2, .4, .6]);
+
+                        let modelLoc = gl.getUniformLocation(cameraProgram, "model");
+                        gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                        gl.drawElements(gl.TRIANGLES, elements.length, gl.UNSIGNED_SHORT, 0);
+                    }
+                });
             }
         };
     }

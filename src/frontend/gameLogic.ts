@@ -1,6 +1,6 @@
-import { Cursor, Vec3, Player } from "./types.js"
+import { Cursor, Player } from "./types.js"
 import { addVec3 } from "./math.js";
-import { ClientMessage, Coordinate, Fence, ID, Orientation, Player as NetworkPlayer } from "../shared/types.js";
+import { Vec3, ClientMessage, Coordinate, Fence, ID, Orientation, Player as NetworkPlayer, MessageType } from "../shared/types.js";
 import { clamp } from "./utils.js";
 
 const UNINITIALIZED = "NA";
@@ -195,10 +195,13 @@ export class GameLogic {
         let pos = this.cursor.pos;
         this.notifyServer(
             {
-                playerId: this.myId,
-                action: {
-                    heading: {row: pos[2], col: pos[0], layer: pos[1]},
-                    fence: undefined,
+                type: MessageType.ClientAction,
+                payload: {
+                    playerId: this.myId,
+                    action: {
+                        heading: {row: pos[2], col: pos[0], layer: pos[1]},
+                        fence: undefined,
+                    }
                 }
             }
         )
@@ -211,10 +214,13 @@ export class GameLogic {
         let orientation = this.cursor.orientation;
         this.notifyServer(
             {
-                playerId: this.myId,
-                action: {
-                    heading: undefined,
-                    fence: this.convertCursorToServerFence(pos, orientation)
+                type: MessageType.ClientAction,
+                payload: {
+                    playerId: this.myId,
+                    action: {
+                        heading: undefined,
+                        fence: this.convertCursorToServerFence(pos, orientation)
+                    }
                 }
             }
         )

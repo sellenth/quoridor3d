@@ -1,4 +1,4 @@
-import { Vec3, Mat4 } from "./types"
+import { Vec3, Mat4 } from "../shared/types"
 
 export function addVec3(a: Vec3, b: Vec3): Vec3
 {
@@ -44,19 +44,24 @@ export function scale(x: number, y: number, z: number, m: Mat4): Mat4
     ])
 }
 
+export function degreesToRadians(d: number)
+{
+    return d * Math.PI / 180;
+}
+
 export function cos_d(d: number): number
 {
-    return (Math.cos(d * Math.PI / 180));
+    return (Math.cos(degreesToRadians(d)));
 }
 
 export function sin_d(d: number): number
 {
-    return (Math.sin(d * Math.PI / 180));
+    return (Math.sin(degreesToRadians(d)));
 }
 
 export function tan_d(d: number): number
 {
-    return (Math.tan(d * Math.PI / 180));
+    return (Math.tan(degreesToRadians(d)));
 }
 
 export function rotationXY(rad: number, m: Mat4): Mat4

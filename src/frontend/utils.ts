@@ -1,4 +1,4 @@
-import { Mat4 } from "./types.js"
+import { Mat4 } from "../shared/types.js"
 
 export function createShader(gl: WebGL2RenderingContext, type: GLuint, source: string) {
     let shader = gl.createShader(type);

@@ -1,5 +1,5 @@
 import { GameLogic } from "./gameLogic"
-import { Vec3 } from "./types"
+import { Vec3 } from "../shared/types"
 import {crossProductVec3, subVec3, addVec3, scaleVec3, normalizeVec3, cos_d, sin_d, invertMat4} from "./math.js"
 
 export class Camera {
@@ -33,6 +33,21 @@ export class Camera {
     GetPosition()
     {
         return this.#position;
+    }
+
+    GetFrontVec()
+    {
+        return this.#frontVec;
+    }
+
+    GetYaw()
+    {
+        return this.#yaw;
+    }
+
+    GetPitch()
+    {
+        return this.#pitch;
     }
 
     Move(deltaTime: number)
@@ -75,7 +90,7 @@ export class Camera {
         this.#upVec = normalizeVec3(crossProductVec3( this.#rightVec, this.#frontVec ));
 
     }
-    
+
     getCameraMatrix()
     {
         return [

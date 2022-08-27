@@ -1,9 +1,4 @@
-import { Orientation } from "../shared/types";
-
-export type Vec3 = [number, number, number];
-export type Vec4 = [number, number, number, number];
-
-export type Mat4 = Float32List;
+import { Orientation, Vec3 } from "../shared/types";
 
 export type Player = {
     id: string
