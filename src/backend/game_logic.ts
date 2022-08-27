@@ -50,6 +50,7 @@ export class Game
 
     InitializeEmptyBoard()
     {
+        this.board.length = 0;
         for(let i = 0; i < this.actualBoardSize; ++i)
         {
             this.board.push([]);
@@ -213,6 +214,24 @@ export class Game
             {
                 this.switchPlayer()
             }
+
+            this.ClearBoardAfterLastPlayer();
+        }
+    }
+
+    ClearBoardAfterLastPlayer()
+    {
+        console.log('clearing board after 5 seconds')
+        if (this.players.length == 0)
+        {
+            setTimeout(() => {
+                console.log('should be clearing board')
+                if (this.players.length ==0)
+                {
+                    this.InitializeEmptyBoard();
+                    this.fenceListForClients.length = 0;
+                }
+            }, 5000);
         }
     }
 
