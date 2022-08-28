@@ -16,6 +16,7 @@ After you've started the backend, the game will be available on port 8008
 - [x] add camera model
 - [x] network camera models
 - [ ] add Jake's music
+- [ ] add hopping mechanic
 - [ ] give each GL program a separate file
 - [ ] start camera behind player position
 - [ ] fix start position of added players
@@ -26,4 +27,3 @@ After you've started the backend, the game will be available on port 8008
 - [ ] make cursor movement relative to camera's front
 - [ ] factor out board operations into new class
 - [ ] allow spectators
-- [ ] something is slightly off about networked camera look direction

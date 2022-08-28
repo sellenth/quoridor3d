@@ -28,6 +28,7 @@ main
 
 #gameOver
 {
+    pointer-events: none;
     text-align: center;
     text-shadow: 1vmin 1vmin 0 #E79C10, -1vmin -1vmin 0 #D53a33;
     font-family: sans-serif;

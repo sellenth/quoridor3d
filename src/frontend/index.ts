@@ -44,6 +44,9 @@ class GameStatusHandler
         const el = document.querySelector("#gameOver");
         el.textContent = myID == winningID ? "You win" : "Better luck next time";
         el.classList.add("fancy-animation");
+        setTimeout(() => {
+            el.classList.remove("fancy-animation");
+        }, 5000);
     }
 
     UpdateWalls(myID: ID, player: Player)
@@ -506,9 +509,9 @@ class Engine
                     if (camera.id != this.gameLogic.myId)
                     {
                         let modelMat = translate(...camera.position, identity());
-                        modelMat = translate(-.5, -.5, 0, modelMat);
                         modelMat = rotationXZ( degreesToRadians(camera.yaw + 90), modelMat );
                         modelMat = rotationYZ( degreesToRadians(camera.pitch * -1), modelMat );
+                        modelMat = translate(-.5, -.5, 0, modelMat);
 
                         let colorLoc = gl.getUniformLocation(cameraProgram, "color");
                         gl.uniform3fv(colorLoc, [.2, .4, .6]);
