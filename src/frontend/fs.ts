@@ -66,9 +66,10 @@ export const fsCamera = `#version 300 es
     in vec4 modelCoord;
 
     void main() {
-
         vec2 st = gl_FragCoord.xy / u_resolution;
-        outColor = vec4(color, 1.);
+        float b = distance(modelCoord.xy, vec2(0.5, 0.5));
+        float z = distance(modelCoord.z, 0.0);
+        outColor = vec4(z, 0.0, b * 1.5, 1.);
     }
 `;
 

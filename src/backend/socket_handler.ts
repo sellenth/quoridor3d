@@ -46,11 +46,11 @@ export function configureSocketServer(server: WSServer)
 
         gameStateConnection.on('message', (message) => {
             if (message.type == 'utf8') {
-
                 const msg = JSON.parse(message.utf8Data) as ClientMessage;
+
                 if (msg.type == MessageType.ClientAction)
                 {
-                    console.log('Received Message: ' + message.utf8Data);
+                    console.log('Received Action: ' + message.utf8Data);
                     game.handleClientMessage(msg.payload as ClientAction);
                 }
                 else if (msg.type == MessageType.ClientCameraPos)
@@ -62,13 +62,19 @@ export function configureSocketServer(server: WSServer)
         });
 
         gameStateConnection.on('close', (reasonCode, description) => {
-            game.RemovePlayer(connectionUUID);
-            clients.delete(connectionUUID);
-            numConnections--;
-            UpdateAllClients(MessageType.GameState, game.getGameState());
-            console.log((new Date()) + ' Peer ' + gameStateConnection.remoteAddress + ' disconnected.');
+            PerformClientCleanup(connectionUUID);
         });
     });
+}
+
+function PerformClientCleanup(connectionUUID: string)
+{
+    game.RemovePlayer(connectionUUID);
+    clients.delete(connectionUUID);
+    clientCams.delete(connectionUUID);
+    numConnections--;
+    UpdateAllClients(MessageType.GameState, game.getGameState());
+    console.log((new Date()) + ' Peer %s disconnected.', connectionUUID);
 }
 
 function originIsAllowed(_: string) {
