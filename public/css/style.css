@@ -5,7 +5,7 @@ html
 body
 {
     height: 100%;
-    background-color:bisque;
+    background-color: #272eb040;
     display: grid;
     align-items: center;
     justify-items: center;
@@ -38,6 +38,15 @@ main
     margin-top: 20%;
     position: absolute;
     visibility: hidden;
+}
+
+#musicCredit
+{
+    position:absolute;
+    width: 100%;
+    bottom: 10px;
+    text-align: center;
+    margin: 0;
 }
 
 .fancy-animation

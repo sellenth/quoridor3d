@@ -86,7 +86,7 @@ export const fsGrid = `#version 300 es
         vec2 st = gl_FragCoord.xy / u_resolution;
 
         float a = (5. - distance(camPos.xyz, worldCoord.xyz)) / 5.;
-        outColor = vec4(1., .5, 0., a);
+        outColor = vec4(0., .5, 0., a);
     }
 `;
 

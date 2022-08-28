@@ -15,7 +15,8 @@ After you've started the backend, the game will be available on port 8008
 - [x] bound cursor to board limits
 - [x] add camera model
 - [x] network camera models
-- [ ] add Jake's music
+- [x] add Jake's music
+- [x] restyle players
 - [ ] add hopping mechanic
 - [ ] give each GL program a separate file
 - [ ] start camera behind player position
@@ -23,7 +24,6 @@ After you've started the backend, the game will be available on port 8008
 - [ ] unify naming of walls/fences
 - [ ] unify style of function casing
 - [ ] lint this thing
-- [ ] restyle players
 - [ ] make cursor movement relative to camera's front
 - [ ] factor out board operations into new class
 - [ ] allow spectators

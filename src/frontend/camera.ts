@@ -2,6 +2,8 @@ import { GameLogic } from "./gameLogic"
 import { Vec3 } from "../shared/types"
 import {crossProductVec3, subVec3, addVec3, scaleVec3, normalizeVec3, cos_d, sin_d, invertMat4} from "./math.js"
 
+let audio = new Audio("/static/jakesTrack.m4a");
+
 export class Camera {
     #frontVec: Vec3 = [0, 0, 1];
     #rightVec: Vec3 = [1, 0, 0];
@@ -167,6 +169,10 @@ export class Camera {
 
         canvas.addEventListener('click', e => {
             this.firstLook = true;
+            if (this.firstLook == true)
+            {
+                audio.play();
+            }
             canvas.requestPointerLock = canvas.requestPointerLock;
             canvas.requestPointerLock();
         })
