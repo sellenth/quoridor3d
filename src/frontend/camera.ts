@@ -19,6 +19,8 @@ export class Camera {
         w: false,
         s: false,
         d: false,
+        space: false,
+        ctrl: false
     };
     firstLook = true;
 
@@ -67,6 +69,12 @@ export class Camera {
         }
         if (this.keysDown.d) {
             this.#position = addVec3(this.#position, scaleVec3(this.#rightVec, velocity));
+        }
+        if (this.keysDown.space) {
+            this.#position = addVec3(this.#position, [0, velocity, 0]);
+        }
+        if (this.keysDown.ctrl) {
+            this.#position = addVec3(this.#position, [0, -velocity, 0]);
         }
 
         this.#position.forEach((_, i, arr) => {
@@ -126,7 +134,6 @@ export class Camera {
 
     configureCameraListeners(canvas: HTMLCanvasElement, gameLogic: GameLogic)
     {
-
         canvas.addEventListener('keydown', e => {
             if (e.key == "w")
                 this.keysDown.w = true;
@@ -144,10 +151,14 @@ export class Camera {
                 gameLogic.MoveCursorFront();
             if (e.key == "ArrowDown")
                 gameLogic.MoveCursorBack();
-            if (e.ctrlKey)
+            if (e.key == "q")
                 gameLogic.MoveCursorDown();
-            if (e.key == " ")
+            if (e.key == "e")
                 gameLogic.MoveCursorUp();
+            if (e.key == "Control")
+                this.keysDown.ctrl = true;
+            if (e.key == " ")
+                this.keysDown.space = true;
             if (e.key == "Enter")
                 gameLogic.commitMove();
             if (e.key == "c")
@@ -165,6 +176,10 @@ export class Camera {
                 this.keysDown.s = false;
             if (e.key == "d")
                 this.keysDown.d = false;
+            if (e.key == "Control")
+                this.keysDown.ctrl = false;
+            if (e.key == " ")
+                this.keysDown.space = false;
         })
 
         canvas.addEventListener('click', e => {
