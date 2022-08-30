@@ -400,6 +400,8 @@ class Engine
                 if (this.gameLogic.IsMyTurn() && this.gameLogic.cursorMode == "pawn" )
                 {
                     let modelMat = translate(...addVec3(this.gameLogic.getActivePlayer().pos, this.gameLogic.cursor.pos), identity());
+                    modelMat = translate(0.4, 0.4, 0.4, modelMat);
+                    modelMat = scale(0.2, 0.2, 0.2, modelMat);
 
                     let colorLoc = gl.getUniformLocation(playerProgram, "color");
                     gl.uniform3fv(colorLoc, [0, 0, 255]);
