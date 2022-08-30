@@ -18,6 +18,7 @@ After you've started the backend, the game will be available on port 8008
 - [x] add Jake's music
 - [x] restyle players
 - [x] q e for y axis up and down 
+- [x] different color for wall cursor
 - [ ] add hopping mechanic
 - [ ] give each GL program a separate file
 - [ ] start camera behind player position
@@ -27,7 +28,6 @@ After you've started the backend, the game will be available on port 8008
 - [ ] lint this thing
 - [ ] factor out board operations into new class
 - [ ] allow spectators
-- [ ] different color for wall cursor
 - [ ] better indicator for when it's your turn
 - [ ] make cursor movement relative to camera's front
 - [ ] pick character color

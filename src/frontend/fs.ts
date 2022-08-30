@@ -27,7 +27,9 @@ export const fsFence = `#version 300 es
         channel1 = step(pulseTime, channel1);
         */
 
-        outColor = vec4(.2, a, .8, 1.);
+        vec3 radiatingColor = vec3(.2, a, .8);
+
+        outColor = vec4(radiatingColor + color, 1.);
     }
 `;
 

@@ -608,6 +608,8 @@ class Engine
                 let camLoc = gl.getUniformLocation(fenceProgram, "camera");
                 gl.uniformMatrix4fv(camLoc, false, viewMat);
 
+                let colorLoc = gl.getUniformLocation(fenceProgram, "color");
+
                 let timeLoc = gl.getUniformLocation(fenceProgram, "u_time");
                 gl.uniform1f(timeLoc, this.frameTiming.elapsed);
 
@@ -620,6 +622,8 @@ class Engine
 
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
                     gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                    gl.uniform3fv(colorLoc, [.0, 0., 0.]);
 
                     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 })
@@ -635,6 +639,8 @@ class Engine
 
                     let modelLoc = gl.getUniformLocation(fenceProgram, "model");
                     gl.uniformMatrix4fv(modelLoc, false, modelMat);
+
+                    gl.uniform3fv(colorLoc, [.5, 0., 0.]);
 
                     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
                 }
