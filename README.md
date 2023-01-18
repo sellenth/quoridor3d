@@ -25,9 +25,10 @@ Here is Quoridor3d, things are much the same but now in addition to the board's 
 * **E** and **Q** move the cursor up and down layers of the play space
 * When you're placing a wall, press **R** to change its orientation
 * Use **Arrow Keys** to move cursor. Note that directions are independent of camera's view direction
+* Press **Enter/Return** to confirm your move
 
 ## Play
-The game is hosted here [https://quor3dor.herokuapp.com/](https://quor3dor.herokuapp.com/). If it has not been accessed recently, there may be a 30 second dyno spinup time.
+The game is hosted here [https://quor3dor.herokuapp.com/](https://quor3dor.herokuapp.com/). If it has not been accessed recently, there may be a 30 second dyno spin up time.
 
 ### TODOs
 - [x] disallow moves through walls
